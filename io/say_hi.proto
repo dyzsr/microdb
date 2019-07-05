@@ -1,0 +1,9 @@
+syntax = "proto2";
+
+package io;
+
+message SayHi {
+    required int32 id = 1;
+    required string something = 2;
+    optional string extra_info = 3;
+}

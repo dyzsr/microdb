@@ -3,16 +3,20 @@
 from ply import yacc
 
 RESERVED = {
-        'select' : 'SELECT',
-        'from'   : 'FROM',
-        'where'  : 'WHERE',
-        'as'     : 'AS',
+        'select'  : 'SELECT',
+        'from'    : 'FROM',
+        'where'   : 'WHERE',
+        'groupby' : 'GROUPBY',
+        'having'  : 'HAVING',
+        'as'      : 'AS',
+        'in'      : 'IN',
         }
-        
 
 
 tokens = tuple(RESERVED.values()) + (
-        'INT',# 'VARCHAR', 'NVARCHAR',
+        'INT',
+        # 'VARCHAR',
+        # 'NVARCHAR',
         'ID',
         'SEMICOLON',
         'DOT',
@@ -20,6 +24,11 @@ tokens = tuple(RESERVED.values()) + (
         'STAR',
         'LPAR',
         'RPAR',
+        'LT',
+        'LTE',
+        'GT',
+        'GTE',
+        'EQ',
         )
 
 # tokens
@@ -30,6 +39,11 @@ t_COMMA = r','
 t_STAR = r'\*'
 t_LPAR = r'\('
 t_RPAR = r'\)'
+t_LT = r'<'
+t_LTE = r'<='
+t_GT = r'>'
+t_GTE = r'>='
+t_EQ = r'=='
 
 def t_ID(t):
     r'[a-zA-Z_]\w*'

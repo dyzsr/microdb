@@ -14,15 +14,43 @@
 # ----
 
 import io.StoreManager
+import operator as op
 
 
 class IoCacheManager:
+    cache_block_Limit = 3
+    #
+    list_cache_block = []
+    # 表名
+    list_cache_block_name = []
+    # 是否失效
+    list_cache_block_flag = []
+
+    # 替换策略,待实现
+    def LRU(self):
+        return
+
+    def find_cache_block(self, table_name):
+        list_name = self.list_cache_block_name
+        index = 0
+        for block_name in list_name:
+            if op.eq(block_name, table_name):
+                return index
+            else:
+                index += 1
+        if index == len(list_name):
+            return -1
+
     # 立即表载入
     def load_right_now(self, table_name):
         return
 
     # 立即表载出
     def store_right_now(self):
+        return
+
+    # 是否需要载入
+    def check_table_load(self):
         return
 
     # 增

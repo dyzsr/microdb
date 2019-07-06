@@ -74,7 +74,7 @@ def t_newline(t):
     r'\n'
 
 def t_error(t):
-    print('UnIDified symbol "%s"' % t.value)
+    print('Unidentified symbol "%s"' % t.value)
     t.lexer.skip(len(t.value))
 
 # build the lexer
@@ -110,14 +110,16 @@ def p_statement_select(p):
 def p_selectexpr_nofilter(p):
     'selectexpr : SELECT columnlist FROM tablelist'
     p[0] = {
-            'query': 'select',
+            'type': 'query',
+            'name': 'select',
             'content': {'tables': p[4], 'columns': p[2]}
             }
 
 def p_selectexpr_where(p):
     'selectexpr : SELECT columnlist FROM tablelist WHERE filterlist'
     p[0] = {
-            'query': 'select',
+            'type': 'query',
+            'name': 'select',
             'content': {'tables': p[4], 'columns': p[2], 'filters': p[6]}
             }
 
@@ -137,11 +139,18 @@ def p_columnlist(p):
 
 def p_column(p):
     'column : ID'
-    p[0] = {'name': p[1]}
+    p[0] = {
+            'type': 'column', 
+            'name': p[1]
+            }
 
 def p_column_tablename(p):
     'column : ID DOT ID'
-    p[0] = {'table': p[1], 'name': p[3]}
+    p[0] = {
+            'type': 'column', 
+            'name': p[3], 
+            'table': p[1]
+            }
 
 
 # table list
@@ -158,17 +167,26 @@ def p_tablelist(p):
 
 def p_table(p):
     'table : ID'
-    p[0] = {'name': p[1]}
+    p[0] = {
+            'type': 'table', 
+            'name': p[1]
+            }
 
 def p_table_expr(p):
     'table : LPAR selectexpr RPAR AS ID'
-    p[0] = {'name': p[5], 'expr': p[2]}
+    p[0] = {
+            'type': 'table', 
+            'name': p[5], 
+            'source': p[2]
+            }
 
 
 ## generate expressions combination
 
 def make_expr(operator, *operands):
-    return {'operator': operator, 'operands': operands}
+    return {'type': 'opexpr', 
+            'operator': operator, 
+            'operands': operands}
 
 _opmap = {'ADD': '+', 'SUB': '-', 'MUL': '*', 'DIV': '/'}
 

@@ -1,29 +1,58 @@
 # SQL Parser
 
-## 说明
+## 1.说明
 
 将输入的SQL语句解析为语法树（嵌套的Python字典）。
 
-## 结构
+## 2.语法树结构
 
-``` Python
+### 2.1 查询
+
+``` py
 {
-  'query': <query type>,
+  'type': 'query',
+  'name': <query name>,
   'content': {...},
 }
 ```
 
 **注**：我们用「」来表示可选的项。
 
-## Select语句
+### 2.2 表
 
-``` SQL
-SELECT ... FROM ... [ WHERE ... ];
+``` py
+{
+  'type': 'table',
+  'name': <table name>,
+  「 'source': {...}, 」
+}
 ```
 
-``` Python
+`source`的内容可以是一个查询。
+如果不嵌套查询，则无`source`字段。
+
+### 2.3 列
+
+``` py
 {
-  'query': 'select',
+  'type': 'column',
+  'name': <column name>,
+  「 'table': <table name>, 」
+}
+```
+
+如果不指定`table`（形如table.column），则无`table`字段。
+
+## 3. Select语句
+
+``` sql
+SELECT ... FROM ... 「 WHERE ... 」;
+```
+
+``` py
+{
+  'type': 'query',
+  'name': 'select',
   'content': {
     'tables': (),
     'columns': (),
@@ -31,41 +60,6 @@ SELECT ... FROM ... [ WHERE ... ];
   }
 }
 ```
-
-`columns`、`tables`均为元组。
-
-`columns`的结构如下：
-
-``` py
-(
-  {
-    'name': <column name>, 
-    「 'table': <table name> 」
-  },
-  ...
-)
-```
-
-如果不指定`table`（形如table.column），则无`'table'`字段。
-
-`tables`的结构如下：
-
-``` py
-(
-  {
-    'name': <table name>
-    「
-      'expr': {
-        'query': <query type>,
-        'content': {...}
-      } 
-    」
-  }
-)
-```
-
-如果不嵌套查询，则无`'expr'`字段。
-
 
 ### 普通查询
 
@@ -75,12 +69,16 @@ SELECT c1, b.c2 FROM a, b;
 
 ``` py
 {
-  'query': 'select', 
+  'type': 'query', 
+  'name': 'select', 
   'content': {
-    'tables': ({'name': 'a'}, {'name': 'b'}), 
+    'tables': (
+      {'type': 'table', 'name': 'a'}, 
+      {'type': 'table', 'name': 'b'}
+    ), 
     'columns': (
-      {'name': 'c1'}, 
-      {'table': 'b', 'name': 'c2'}
+      {'type': 'column', 'name': 'c1'}, 
+      {'type': 'column', 'name': 'c2', 'table': 'b'}
     )
   }
 }
@@ -94,9 +92,13 @@ SELECT * FROM a, b;
 
 ``` python
 {
-  'query': 'select',
+  'type': 'query', 
+  'name': 'select', 
   'content': {
-    'tables': ({'name': 'a'}, {'name': 'b'}),
+    'tables': (
+      {'type': 'table', 'name': 'a'}, 
+      {'type': 'table', 'name': 'b'}
+    ), 
     'columns': ('*',)
   }
 }
@@ -112,24 +114,33 @@ WHERE a.c2 == b.c3 AND b.c3 > 100;
 
 ``` py
 {
-  'query': 'select', 
+  'type': 'query', 
+  'name': 'select', 
   'content': {
-    'tables': ({'name': 'a'}, {'name': 'b'}), 
-    'columns': ({'name': 'c1'},), 
+    'tables': (
+      {'type': 'table', 'name': 'a'}, 
+      {'type': 'table', 'name': 'b'}
+    ), 
+    'columns': (
+      {'type': 'column', 'name': 'c1'},
+    ), 
     'filters': {
+      'type': 'opexpr', 
       'operator': 'and', 
       'operands': (
         {
+          'type': 'opexpr', 
           'operator': '==', 
           'operands': (
-            {'table': 'a', 'name': 'c2'}, 
-            {'table': 'b', 'name': 'c3'}
+            {'type': 'column', 'name': 'c2', 'table': 'a'}, 
+            {'type': 'column', 'name': 'c3', 'table': 'b'}
           )
         }, 
         {
+          'type': 'opexpr', 
           'operator': '>', 
           'operands': (
-            {'table': 'b', 'name': 'c3'}, 
+            {'type': 'column', 'name': 'c3', 'table': 'b'}, 
             100
           )
         }
@@ -148,24 +159,31 @@ FROM (SELECT * FROM a WHERE c1 + c2 > 1000) AS t;
 
 ``` py
 {
-  'query': 'select', 
+  'type': 'query', 
+  'name': 'select', 
   'content': {
     'tables': (
       {
+        'type': 'table', 
         'name': 't', 
-        'expr': {
-          'query': 'select', 
+        'source': {
+          'type': 'query', 
+          'name': 'select', 
           'content': {
-            'tables': ({'name': 'a'},), 
+            'tables': (
+              {'type': 'table', 'name': 'a'},
+            ), 
             'columns': ('*',), 
             'filters': {
+              'type': 'opexpr', 
               'operator': '>', 
               'operands': (
                 {
+                  'type': 'opexpr', 
                   'operator': '+', 
                   'operands': (
-                    {'name': 'c1'}, 
-                    {'name': 'c2'}
+                    {'type': 'column', 'name': 'c1'}, 
+                    {'type': 'column', 'name': 'c2'}
                   )
                 }, 
                 1000
@@ -176,8 +194,8 @@ FROM (SELECT * FROM a WHERE c1 + c2 > 1000) AS t;
       },
     ), 
     'columns': (
-      {'name': 'c1'}, 
-      {'name': 'c2'}
+      {'type': 'column', 'name': 'c1'}, 
+      {'type': 'column', 'name': 'c2'}
     )
   }
 }

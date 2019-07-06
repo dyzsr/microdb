@@ -11,6 +11,9 @@ except ImportError:
     import pickle
 
 
+dirPath = "D:\\dbms\\store"
+
+
 class StoreManager:
     @staticmethod
     def object_to_string(obj):
@@ -21,39 +24,39 @@ class StoreManager:
         return pickle.loads(line)
 
     @staticmethod
-    def input_table(self, list_object, table_name):
+    def write_table(list_object, table_name):
         list_string = []
         for object_ins in list_object:
-            list_string.insert(self.object_to_string(object_ins))
-        self.store_table_file(list_string, table_name)
+            list_string.append(StoreManager.object_to_string(object_ins))
+        StoreManager.store_table_file(list_string, table_name)
 
     @staticmethod
     def store_table_file(list_string, table_name):
-        nowtablefile = open(table_name, "w")
+        table_file = open(dirPath+table_name, "w")
         for line in list_string:
-            nowtablefile.write(line+"\n")
-        nowtablefile.close()
+            table_file.write(line+"\n")
+        table_file.close()
 
     @staticmethod
-    def output_table(self, table_name):
+    def read_table(table_name):
         try:
-            fp = open(table_name, "r")
+            fp = open(dirPath+table_name, "r")
             fp.close()
         except IOError:
             print("Table is not accessible.")
             return
-        list_string = self.load_table_file(table_name)
+        list_string = StoreManager.load_table_file(table_name)
         list_object = []
         for object_string in list_string:
-            list_object.insert(self.string_to_object(object_string))
+            list_object.append(StoreManager.string_to_object(object_string))
         return list_object
 
     @staticmethod
     def load_table_file(table_name):
         list_string = []
-        now_table_file = open(table_name, "r")
+        now_table_file = open(dirPath+table_name, "r")
         for line in now_table_file.readlines():
-            list_string.insert(line)
+            list_string.append(line)
         now_table_file.close()
         return list_string
 

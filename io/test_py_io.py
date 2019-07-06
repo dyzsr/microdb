@@ -8,14 +8,27 @@ try:
 except ImportError:
     import pickle
 
+import operator as op
+
 
 class TestObject:
     id = 1
     obName = "11"
 
 
+dict = {'Name': 'Zara', 'Age': 7, 'Class': 'First'}
+
 biliBili = TestObject()
-nowStr = pickle.dumps(biliBili)
+nowStr = pickle.dumps(dict)
 print(nowStr)
 nowBili = pickle.loads(nowStr)
-print(nowBili.id, " ", nowBili.obName)
+print(nowBili['Name'], " ", nowBili['Class'])
+
+dict1 = {'Name': 'Zara', 'Age': 7}
+dict2 = {'Name': 'Mahnaz', 'Age': 27}
+dict3 = {'Name': 'Abid', 'Age': 27}
+dict4 = {'Age': 7, 'Name': 'Zara'}
+dict5 = {'Name': 'Zara'}
+print("Return Value : %d", op.eq(dict1, dict2))
+print("Return Value : %d", op.eq(dict2, dict3))
+print("Return Value : %d", op.eq(dict1, dict4))

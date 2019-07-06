@@ -43,7 +43,7 @@
 
 如果不指定`table`（形如table.column），则无`table`字段。
 
-## 3. Select语句
+## 3. SELECT语句
 
 ``` sql
 SELECT ... FROM ... 「 WHERE ... 」;
@@ -109,7 +109,7 @@ SELECT * FROM a, b;
 ``` sql
 SELECT c1 
 FROM a, b 
-WHERE a.c2 == b.c3 AND b.c3 > 100;
+WHERE a.c2 = b.c3 AND b.c3 > 100;
 ```
 
 ``` py
@@ -130,7 +130,7 @@ WHERE a.c2 == b.c3 AND b.c3 > 100;
       'operands': (
         {
           'type': 'opexpr', 
-          'operator': '==', 
+          'operator': '=', 
           'operands': (
             {'type': 'column', 'name': 'c2', 'table': 'a'}, 
             {'type': 'column', 'name': 'c3', 'table': 'b'}
@@ -197,6 +197,103 @@ FROM (SELECT * FROM a WHERE c1 + c2 > 1000) AS t;
       {'type': 'column', 'name': 'c1'}, 
       {'type': 'column', 'name': 'c2'}
     )
+  }
+}
+```
+
+## 4. CREATE语句
+
+``` sql
+CREATE DATABASE <database-name>;
+```
+
+``` py
+{
+  'type': 'query',
+  'name': 'create',
+  'content': {
+    'type': 'database',
+    'name': <database-name>
+  }
+}
+```
+
+``` sql
+CREATE TABLE <table-name> (
+  <column1> <column_type> 「 <constraint1>, ... 」,
+  ...,
+  「 <constraint1>, ... 」
+);
+```
+
+``` py
+{
+  'type': 'query',
+  'name': 'create',
+  'content': {
+    'type': 'table',
+    'name': <table-name>
+    'columns': (),
+    'constraints': {},
+  }
+} 
+```
+
+### 4.1 CREATE DATABASE
+
+``` sql
+CREATE DATABASE db1;
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'create', 
+  'content': {
+    'type': 'database', 
+    'name': 'db1'
+  }
+}
+```
+
+### 4.2 CREATE TABLE
+
+``` sql
+CREATE TABLE hehe (
+  a INT, 
+  b VARCHAR(10), 
+  c BOOLEAN, 
+  PRIMARY KEY(a, c)
+);
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'create', 
+  'content': {
+    'type': 'table', 
+    'name': 'hehe', 
+    'columns': (
+      {
+        'type': 'column', 
+        'name': 'a', 
+        'datatype': {'typename': 'int'}
+      }, 
+      {
+        'type': 'column', 
+        'name': 'b', 
+        'datatype': {'typename': 'varchar', 'length': 10}
+      }, 
+      {
+        'type': 'column', 
+        'name': 'c', 
+        'datatype': {'typename': 'bool'}
+      }
+    ), 
+    'constraints': {
+      'primary key': ('a', 'c')
+    }
   }
 }
 ```

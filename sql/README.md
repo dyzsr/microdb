@@ -13,6 +13,8 @@
 }
 ```
 
+**注**：我们用「」来表示可选的项。
+
 ## Select语句
 
 ``` SQL
@@ -44,7 +46,7 @@ SELECT ... FROM ... [ WHERE ... ];
 )
 ```
 
-如果不指定`table`（形如table.column），则无`table`字段。
+如果不指定`table`（形如table.column），则无`'table'`字段。
 
 `tables`的结构如下：
 
@@ -61,6 +63,8 @@ SELECT ... FROM ... [ WHERE ... ];
   }
 )
 ```
+
+如果不嵌套查询，则无`'expr'`字段。
 
 
 ### 普通查询
@@ -82,7 +86,7 @@ SELECT c1, b.c2 FROM a, b;
 }
 ```
 
-### 含有*（查询所有列）
+### 含有*的查询（查询所有列）
 
 ``` sql
 SELECT * FROM a, b;
@@ -98,7 +102,7 @@ SELECT * FROM a, b;
 }
 ```
 
-### 含有WHERE
+### 含有WHERE的查询
 
 ``` sql
 SELECT c1 
@@ -135,7 +139,7 @@ WHERE a.c2 == b.c3 AND b.c3 > 100;
 }
 ```
 
-### 含有嵌套
+### 含有嵌套的查询
 
 ``` sql
 SELECT c1, c2 

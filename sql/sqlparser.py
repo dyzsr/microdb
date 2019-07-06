@@ -101,19 +101,25 @@ IDs = {}
 
 def p_statement_select(p):
     'statement : selectexpr SEMICOLON' 
-    p[0] = {'query': 'select', 'content': p[1]}
+    p[0] = p[1]
     print(p[0])
     
 
 # select expression
 
-def p_selectexpr_nowhere(p):
+def p_selectexpr_nofilter(p):
     'selectexpr : SELECT columnlist FROM tablelist'
-    p[0] = {'tables': p[4], 'columns': p[2]}
+    p[0] = {
+            'query': 'select',
+            'content': {'tables': p[4], 'columns': p[2]}
+            }
 
 def p_selectexpr_where(p):
     'selectexpr : SELECT columnlist FROM tablelist WHERE filterlist'
-    p[0] = {'tables': p[4], 'columns': p[2], 'filters': p[6]}
+    p[0] = {
+            'query': 'select',
+            'content': {'tables': p[4], 'columns': p[2], 'filters': p[6]}
+            }
 
 
 # column list
@@ -127,7 +133,7 @@ def p_columnlist(p):
     if len(p) == 2:
         p[0] = (p[1],)
     else:
-        p[0] = (p[1],) + p[2]
+        p[0] = (p[1],) + p[3]
 
 def p_column(p):
     'column : ID'
@@ -148,7 +154,7 @@ def p_tablelist(p):
     if len(p) == 2:
         p[0] = (p[1],)
     else:
-        p[0] = (p[1],) + p[2]
+        p[0] = (p[1],) + p[3]
 
 def p_table(p):
     'table : ID'

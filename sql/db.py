@@ -1,4 +1,4 @@
-from parser import parser
+from sqlparser import parser
 
 if __name__ == '__main__':
     while True:

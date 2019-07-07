@@ -1,6 +1,6 @@
 # SQL Parser
 
-## 1.说明
+## 1. 说明
 
 将输入的SQL语句解析为语法树（嵌套的Python字典）。
 
@@ -33,9 +33,11 @@
 
 ### 2.3 列
 
+一个列可以是一个字典或者字面量（数值或字符串）。
+
 ``` py
 {
-  'type': 'column',
+  'type': 'column' | 'opexpr',
   'name': <column name>,
   「 'table': <table name>, 」
 }
@@ -43,10 +45,51 @@
 
 如果不指定`table`（形如table.column），则无`table`字段。
 
+### 2.4 表达式
+
+构造表达式的函数
+
+``` py
+ def make_opexpr(operator, *operands):
+     return {'type': 'opexpr',
+             'operator': operator,
+             'operands': operands}
+```
+
+第二个和之后的参数被当作operands的元素传入，返回的opexpr字典中`operands`是一个元组。
+
+``` py
+{
+  'type': 'opexpr', 
+  'operator': <operator>, 
+  'operands': (<operand1>, <operand2>, ...),
+}
+```
+
+### 2.5 运算符的定义
+
+| 操作 | 运算符 |
+|---|---|
+| 加 | `+` |
+| 减 | `-` |
+| 乘 | `*` |
+| 除 | `/` |
+| 取负值 | `uminus` |
+| 小于 | `<` |
+| 小于等于 | `<=` |
+| 大于 | `>` |
+| 大于等于 | `>=` |
+| 等于 | `=` |
+| 不等于 | `!=` |
+| 与 | `and` |
+| 或 | `or`  |
+| 非 | `not` |
+
+
 ## 3. SELECT语句
 
 ``` sql
-SELECT ... FROM ... 「 WHERE ... 」;
+SELECT ... 「 FROM ... 「 WHERE ... 」」;
 ```
 
 ``` py
@@ -54,14 +97,43 @@ SELECT ... FROM ... 「 WHERE ... 」;
   'type': 'query',
   'name': 'select',
   'content': {
-    'tables': (),
     'columns': (),
+    「 'tables': (), 」
     「 'filters': {}, 」
   }
 }
 ```
 
-### 普通查询
+### 只含有 SELECT
+
+``` sql
+SELECT 1 + (-1);
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'select', 
+  'content': {
+    'columns': (
+      {
+        'type': 'opexpr', 
+        'operator': '+', 
+        'operands': (
+          1, 
+          {
+            'type': 'opexpr', 
+            'operator': 'uminus', 
+            'operands': (1,)
+          }
+        )
+      },
+    )
+  }
+}
+```
+
+### 普通查询 SELECT FROM
 
 ``` sql
 SELECT c1, b.c2 FROM a, b;

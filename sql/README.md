@@ -260,7 +260,7 @@ CREATE DATABASE db1;
 
 ``` sql
 CREATE TABLE hehe (
-  a INT, 
+  a INT NOT NULL, 
   b VARCHAR(10), 
   c BOOLEAN, 
   PRIMARY KEY(a, c)
@@ -275,25 +275,154 @@ CREATE TABLE hehe (
     'type': 'table', 
     'name': 'hehe', 
     'columns': (
-      {
-        'type': 'column', 
-        'name': 'a', 
-        'datatype': {'typename': 'int'}
-      }, 
-      {
-        'type': 'column', 
-        'name': 'b', 
-        'datatype': {'typename': 'varchar', 'length': 10}
-      }, 
-      {
-        'type': 'column', 
-        'name': 'c', 
-        'datatype': {'typename': 'bool'}
-      }
+      {'type': 'column', 'name': 'a', 'datatype': {'typename': 'int'}}, 
+      {'type': 'column', 'name': 'b', 'datatype': {'typename': 'varchar', 'length': 10}}, 
+      {'type': 'column', 'name': 'c', 'datatype': {'typename': 'bool'}}
     ), 
     'constraints': {
-      'primary key': ('a', 'c')
+      'primary key': ('a', 'c'), 
+      'not null': ('a',)
     }
+  }
+}
+```
+
+## 5. INSERT语句
+
+``` sql
+INSERT INTO <table-name> 
+「 (col1, col2, ...) 」
+VALUES
+(val1, val2, ...)
+「 , (...), ... 」
+;
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'insert', 
+  'content': {
+    'type': 'values', 
+    'tablename': <table-name>, 
+    「 'columns': (<col1>, ...), 」
+    'values': (<val1>, ...),
+  }
+}
+```
+
+``` sql
+INSERT INTO <table-name>
+SET <col1-name> = <expression>
+「 ，<col2-name> = <expression> 」;
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'insert', 
+  'content': {
+    'type': 'set', 
+    'tablename': <table-name>, 
+    「 'columns': (<col1>, ...), 」
+    'values': (<val1>, ...),
+  }
+}
+```
+
+### 5.1 INSERT VALUES
+
+``` sql
+INSERT INTO tb VALUES
+(1, 2.2, TRUE, 'abc'), 
+(-1, -.1, FALSE, 'def');
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'insert', 
+  'content': {
+    'type': 'values', 
+    'tablename': 'tb', 
+    'values': (
+      (1, 2.2, True, 'abc'), 
+      (
+        {
+          'type': 'opexpr', 
+          'operator': 'uminus', 
+          'operands': (1,)
+        }, 
+        {
+          'type': 'opexpr', 
+          'operator': 'uminus', 
+          'operands': (0.1,)
+        }, 
+        False, 
+        'def'
+      )
+    )
+  }
+}
+```
+
+``` sql
+INSERT INTO tb (c1, c2) VALUES (1, 3);
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'insert', 
+  'content': {
+    'type': 'values', 
+    'tablename': 'tb', 
+    'columns': ('c1', 'c2'), 
+    'values': ((1, 3),)
+  }
+}
+```
+
+### 5.2 INSERT SET
+
+``` sql
+INSERT INTO tb 
+SET c1 = 1, c2 = c3 * (c5 + c6);
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'insert', 
+  'content': {
+    'type': 'set', 
+    'set': (
+      {
+        'column': {'type': 'column', 'name': 'c1'}, 
+        'opexpr': 1
+      }, 
+      {
+        'column': {'type': 'column', 'name': 'c2'}, 
+        'opexpr': {
+          'type': 'opexpr', 
+          'operator': '*', 
+          'operands': (
+            {
+              'type': 'column', 
+              'name': 'c3'
+            }, 
+            {
+              'type': 'opexpr', 
+              'operator': '+', 
+              'operands': (
+                {'type': 'column', 'name': 'c5'}, 
+                {'type': 'column', 'name': 'c6'}
+              )
+            }
+          )
+        }
+      }
+    )
   }
 }
 ```

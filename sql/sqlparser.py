@@ -26,6 +26,7 @@ RESERVED = {
         'having'    : 'HAVING',
         'as'        : 'AS',
         'in'        : 'IN',
+        'set'       : 'SET',
 
         'and'       : 'AND',
         'or'        : 'OR',
@@ -47,7 +48,6 @@ tokens = tuple(RESERVED.values()) + (
         'SEMICOLON',
         'DOT',
         'COMMA',
-        'STAR',
         'LPAR',
         'RPAR',
         'LT',
@@ -56,17 +56,17 @@ tokens = tuple(RESERVED.values()) + (
         'GTE',
         'EQ',
         'NE',
-        'ADD',
-        'SUB',
+        'PLUS',
+        'MINUS',
         'MUL',
         'DIV',
+        'UMINUS',
         )
 
 
 t_SEMICOLON = r';'
 t_DOT = r'\.'
 t_COMMA = r','
-t_STAR = r'\*'
 t_LPAR = r'\('
 t_RPAR = r'\)'
 t_LT = r'<'
@@ -75,8 +75,8 @@ t_GT = r'>'
 t_GTE = r'>='
 t_EQ = r'='
 t_NE = r'!='
-t_ADD = r'\+'
-t_SUB = r'-'
+t_PLUS = r'\+'
+t_MINUS = r'-'
 t_MUL = r'\*'
 t_DIV = r'/'
 
@@ -84,12 +84,21 @@ def t_ID(t):
     r'[a-zA-Z_]\w*'
     t.value = t.value.lower()
     t.type = RESERVED.get(t.value, 'ID')
+
+    if t.value == 'true':
+        t.value = True
+        t.type = 'BOOL'
+    elif t.value == 'false':
+        t.value = False
+        t.type = 'BOOL'
+
     return t
 
-def t_BOOL(t):
-    r'(?i)(true|false)\b'
-    t.value = True if t.value == 'true' else False
-    return t
+
+# def t_BOOL(t):
+#     r'((?i)(true))|((?i)(false))'
+#     t.value = True if t.value.lower() == 'true' else False
+#     return t
 
 def t_FLOAT(t):
     r'(\d+\.\d*)|(\d*\.\d+)'
@@ -103,6 +112,7 @@ def t_INT(t):
 
 def t_STRING(t):
     r"'([^\\']+|\\'|\\\\)*'"
+    t.value = t.value.strip("'")
     return t
 
 t_ignore = ' \t\r\v'
@@ -125,8 +135,9 @@ precedence = (
         ('left', 'OR'),
         ('left', 'AND'),
         ('right', 'NOT'),
-        ('left', 'ADD', 'SUB'),
+        ('left', 'PLUS', 'MINUS'),
         ('left', 'MUL', 'DIV'),
+        ('right', 'UMINUS'),
         )
 
 # dictionary of IDifiers
@@ -140,6 +151,7 @@ def p_statement_select(p):
     'statement : selectexpr SEMICOLON' 
     p[0] = p[1]
     print(p[0])
+    return p[0]
     
 
 
@@ -166,7 +178,7 @@ def p_selectexpr_where(p):
 
 def p_columnlist(p):
     '''
-    columnlist : STAR
+    columnlist : MUL
                | column
                | column COMMA columnlist
     '''
@@ -221,12 +233,12 @@ def p_table_expr(p):
 
 ## generate expressions combination
 
-def make_expr(operator, *operands):
+def make_opexpr(operator, *operands):
     return {'type': 'opexpr', 
             'operator': operator, 
             'operands': operands}
 
-#_opmap = {'ADD': '+', 'SUB': '-', 'MUL': '*', 'DIV': '/'}
+#_opmap = {'PLUS': '+', 'MINUS': '-', 'MUL': '*', 'DIV': '/'}
 
 def opname(operator):
 #    if operator in _opmap:
@@ -249,11 +261,11 @@ def p_filterlist_andor(p):
     filterlist : filterlist AND filterlist
                | filterlist OR  filterlist
     '''
-    p[0] = make_expr(opname(p[2]), p[1], p[3])
+    p[0] = make_opexpr(opname(p[2]), p[1], p[3])
 
 def p_filterlist_not(p):
     'filterlist : NOT filterlist'
-    p[0] = make_expr('not', p[2])
+    p[0] = make_opexpr('not', p[2])
 
 
 # a single filter
@@ -267,7 +279,7 @@ def p_filter(p):
            | colopexpr EQ colopexpr
            | colopexpr NE colopexpr
     '''
-    p[0] = make_expr(opname(p[2]), p[1], p[3])
+    p[0] = make_opexpr(opname(p[2]), p[1], p[3])
 
 
 
@@ -283,18 +295,24 @@ def p_colopexpr_single(p):
     '''
     p[0] = p[1]
 
+def p_colopexpr_uminus(p):
+    '''
+    colopexpr : MINUS colopexpr %prec UMINUS
+    '''
+    p[0] = make_opexpr('uminus', p[2])
+
 def p_colopexpr_parthesis(p):
     'colopexpr : LPAR colopexpr RPAR'
     p[0] = p[2]
 
 def p_colopexpr_binop(p):
     '''
-    colopexpr : colopexpr ADD colopexpr
-              | colopexpr SUB colopexpr
+    colopexpr : colopexpr PLUS colopexpr
+              | colopexpr MINUS colopexpr
               | colopexpr MUL colopexpr
               | colopexpr DIV colopexpr
     '''
-    p[0] = make_expr(opname(p[2]), p[1], p[3])
+    p[0] = make_opexpr(opname(p[2]), p[1], p[3])
 
 
 # Create statement ********************
@@ -336,6 +354,7 @@ def p_createexpr_table(p):
 def merge_constraints(c1, c2):
     res = {}
     res['primary key'] = c1['primary key'] + c2['primary key']
+    res['not null'] = c1['not null'] + c2['not null']
     return res
 
 
@@ -371,7 +390,7 @@ def p_coldeflist_constraints(p):
 def p_columndef(p):
     '''
     columndef : ID datatype
-              | ID datatype PRIMARY KEY
+              | ID datatype colconstraintlist
     '''
     p[0] = {
             'type': 'column',
@@ -379,8 +398,32 @@ def p_columndef(p):
             'datatype': p[2],
             'constraints': defaultdict(tuple),
             }
-    if len(p) > 3 and p[3] == 'primary':
-        p[0]['constraints']['primary key'] = tuple(p[1])
+    #if len(p) > 3 and p[3] == 'primary':
+    #    p[0]['constraints']['primary key'] = (p[1],)
+    if len(p) == 4:
+        for key in p[3]:
+            p[0]['constraints'][key] = (p[1],)
+
+
+def p_colconstraintlist(p):
+    '''
+    colconstraintlist : colconstraint
+                      | colconstraint colconstraintlist
+    '''
+    if len(p) == 2:
+        p[0] = (p[1],)
+    else:
+        p[0] = (p[1],) + p[2]
+
+def p_colconstraint(p):
+    '''
+    colconstraint : PRIMARY KEY
+               | NOT NULL
+    '''
+    if p[1] == 'primary' and p[2] == 'key':
+        p[0] = 'primary key'
+    elif p[1] == 'not' and p[2] == 'null':
+        p[0] = 'not null'
 
 
 # table constraints
@@ -389,7 +432,7 @@ def p_constraints_primary_key(p):
     '''
     constraints : PRIMARY KEY LPAR pklist RPAR
     '''
-    p[0] = defaultdict(tuple, {'primary key': tuple(p[4])})
+    p[0] = defaultdict(tuple, {'primary key': p[4]})
 
 # primary keys
 def p_pklist(p):
@@ -398,9 +441,9 @@ def p_pklist(p):
            | ID COMMA pklist
     '''
     if len(p) == 2:
-        p[0] = tuple(p[1])
+        p[0] = (p[1],)
     else:
-        p[0] = tuple(p[1]) + p[3]
+        p[0] = (p[1],) + p[3]
 
 # datatypes
 
@@ -424,11 +467,152 @@ def p_datatype(p):
         p[0] = {'typename': 'nvarchar', 'length': p[3]}
 
 
+# INSERT statement
+
+def p_statement_insert(p):
+    'statement : insertexpr SEMICOLON'
+    p[0] = p[1]
+    print(p[0])
+    return p[0]
+
+# INSERT expressions
+
+# insert into table values
+def p_insertexpr_values_all(p):
+    '''
+    insertexpr : INSERT INTO ID VALUES \
+            valuelist
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'insert',
+            'content': {
+                'type': 'values',
+                'tablename': p[3],
+                'values': p[5],
+                }
+            }
+
+def p_insertexpr_values_some(p):
+    '''
+    insertexpr : INSERT INTO ID \
+            LPAR colnamelist RPAR \
+            VALUES valuelist
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'insert',
+            'content': {
+                'type': 'values',
+                'tablename': p[3],
+                'columns': p[5],
+                'values': p[8],
+                }
+            }
+
+def p_colnamelist(p):
+    '''
+    colnamelist : ID
+                | ID COMMA colnamelist
+    '''
+    if len(p) == 2:
+        p[0] = (p[1],)
+    else:
+        p[0] = (p[1],) + p[3]
+
+
+def p_valuelist(p):
+    '''
+    valuelist : LPAR values RPAR
+              | LPAR values RPAR COMMA valuelist
+    '''
+    if len(p) == 4:
+        p[0] = (p[2],)
+    else:
+        p[0] = (p[2],) + p[5]
+
+def p_values(p):
+    '''
+    values : value
+           | value COMMA values
+    '''
+    if len(p) == 2:
+        p[0] = (p[1],)
+    else:
+        p[0] = (p[1],) + p[3]
+        
+
+def p_value(p):
+    '''
+    value : BOOL
+          | INT 
+          | FLOAT 
+          | STRING
+    '''
+    p[0] = p[1]
+
+def p_value_parenthesis(p):
+    '''
+    value : LPAR value RPAR
+    '''
+    p[0] = p[1]
+
+def p_value_opexpr(p):
+    '''
+    value : value PLUS value
+          | value MINUS value
+          | value MUL value
+          | value DIV value
+    '''
+    p[0] = make_opexpr(p[2], p[1], p[3])
+
+def p_value_uminus(p):
+    '''
+    value : MINUS value %prec UMINUS
+    '''
+    p[0] = make_opexpr('uminus', p[2])
+
+
+# insert into table set
+def p_insertexpr_set(p):
+    '''
+    insertexpr : INSERT INTO ID \
+            SET colsetlist
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'insert',
+            'content': {
+                'type': 'set',
+                'set': p[5],
+                }
+            }
+
+def p_colsetlist(p):
+    '''
+    colsetlist : colset
+               | colset COMMA colsetlist
+    '''
+    if len(p) == 2:
+        p[0] = (p[1],)
+    else:
+        p[0] = (p[1],) + p[3]
+
+def p_colset(p):
+    '''
+    colset : column EQ colopexpr
+    '''
+    p[0] = {
+            'column': p[1],
+            'opexpr': p[3]
+            }
+
 
 # parsing error
 
 def p_error(p):
-    print('Syntax error at "%s"' % p.value)
+    print('Syntax error at "{}" of type "{}"'.format(p.value, p.type))
+
 
 # build the parser
 from ply import yacc

@@ -70,7 +70,8 @@ class IoCacheManager:
 
     # 立即表载出
     @classmethod
-    def store_right_now(cls):
+    def store_right_now(cls, index):
+        StoreManager.write_table(cls.list_cache_block[index], cls.list_cache_block_name[index])
         return
 
     # 是否需要载入，如果有则不执行，如有没有则载入
@@ -78,16 +79,26 @@ class IoCacheManager:
     def check_table_load(cls, table_name):
         table_index = cls.find_cache_block(table_name)
         if table_index == -1:
+            if glo.Debug == 1:
+                print('[Debug] [IoCacheManager] [check_table_load] [', table_name, ']')
             cls.load_right_now(table_name)
         return
 
     # 增
     @classmethod
     def insert_table_entry(cls, table_name, entry):
+        if glo.Debug == 1:
+            print('[Debug] [IoCacheManager] [insert_table_entry] [input:', table_name, '-', entry, ']')
         cls.check_table_load(table_name)
         table_index = cls.find_cache_block(table_name)
+        if glo.Debug == 1:
+            print('[Debug] [IoCacheManager] [insert_table_entry] [table_index:', table_index, ']')
         IoCacheManager.list_cache_block[table_index]\
             .insert_table_entry(entry)
+        if glo.Debug == 1:
+            print('[Debug] [IoCacheManager] [insert_table_entry] [value:',
+                  IoCacheManager.list_cache_block[table_index].data, ']')
+        cls.store_right_now(table_index)
         return
 
     # 增list
@@ -130,11 +141,29 @@ class IoCacheManager:
     @classmethod
     def create_table(cls, table_name):
         try:
-            fp = open(dirPath+table_name, "r")
+            fp = open(dirPath+'\\'+table_name, "r")
             fp.close()
             print("[Error],[IO,Table_name is exited!]\n")
         except IOError:
-            fp = open(dirPath+table_name, "w")
+            if op.eq(os.path.exists(dirPath), False):
+                os.makedirs(dirPath)
+            fp = open(dirPath+'\\'+table_name, "w")
+            fp.close()
+            return
+        return
+
+    # 创数据库
+    @classmethod
+    def create_database(cls, database_name):
+        try:
+          #  fp = open(dirPath + database_name, "r")
+            fp = open(dirPath + database_name, "r")
+            fp.close()
+            print("[Error],[IO,Table_name is exited!]\n")
+        except IOError:
+
+          #  fp = open(dirPath + database_name, "w")
+            fp = open(dirPath + database_name, "w")
             fp.close()
             return
         return

@@ -16,8 +16,8 @@ For "content" :
 
 | key | value | 
 | - | - |
-| tables | List<table> |
-| columns | List<columns> | 
+| tables | List\<table\> |
+| columns | List\<columns\> | 
 | filters |  | 
 
 For "table" :
@@ -40,7 +40,7 @@ For "table" :
 | key | value |
 | - | - |
 | type | map |
-| columns | list<columns_name> |
+| columns | list\<columns_name\> |
 | 内容 | 对于一个表选择出想要的列 | 
 
 特别的，当columns=*时输出所有的列
@@ -50,7 +50,7 @@ For "table" :
 | key | value |
 | - | - | 
 | type | join |
-| tables | list<query> |
+| tables | list\<query\> |
 | 内容 | 从数据库中选出表 |
 
 ### 对于选择

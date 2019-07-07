@@ -91,6 +91,8 @@ class ExpTreeNode:
             return self.lson.calc_data(data) == self.rson.calc_data(data)
         elif re.search(r"!=", self.type):
             return self.lson.calc_data(data) != self.rson.calc_data(data)
+        elif re.search(r"uminus", self.type):
+            return -self.lson.calc_data(data)
 
     def check_data_main(self, data):
         return self.calc_data(data) != 0
@@ -151,6 +153,8 @@ class LogicalEngine:
     # 直接对应一个表
     @staticmethod
     def table_transform(grammar_node):
+        if glo.Debug == 1:
+            print('[Debug] [LogicalEngine] [table_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['type'] = 'table'
         now_node['name'] = grammar_node['name']
@@ -159,6 +163,8 @@ class LogicalEngine:
     # 处理select中的from
     @staticmethod
     def join_transform(grammar_node):
+        if glo.Debug == 1:
+            print('[Debug] [LogicalEngine] [join_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['son'] = []
         now_node['type'] = 'join'
@@ -173,7 +179,7 @@ class LogicalEngine:
     @staticmethod
     def limit_transform(grammar_node=None):
         if glo.Debug == 1:
-            print('[Debug] [limit_transform] [input:', grammar_node,']')
+            print('[Debug] [LogicalEngine] [limit_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['type'] = "limit"
         now_node['son'] = []
@@ -188,6 +194,8 @@ class LogicalEngine:
     # todo: column也可以是表达式
     @staticmethod
     def map_transform(columns):
+        if glo.Debug == 1:
+            print('[Debug] [map_transform] [input:', columns)
         now_node = dict()
         now_node['type'] = "map"
         now_node['son'] = []
@@ -227,22 +235,25 @@ class LogicalEngine:
             print('[Debug] [create_transform] [input:', grammar_node)
         if op.eq(grammar_node['type'], 'database'):
             return LogicalEngine.create_database_transform(grammar_node)
-        return
+        return LogicalEngine.create_table_transform(grammar_node)
 
     # 创建数据库的表
     # todo:物理计划执行的时候要知道数据库的元信息,这里还没处理columns表
     @staticmethod
     def create_table_transform(grammar_node):
-
+        if glo.Debug == 1:
+            print('[Debug] [create_table_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['type'] = "ct"
         now_node['table'] = grammar_node['name']
         now_node['columns'] =grammar_node['columns']
         now_node['primary'] = grammar_node['constraints']
-        return
+        return now_node
 
     @staticmethod
     def create_database_transform(grammar_node):
+        if glo.Debug == 1:
+            print('[Debug] [create_database_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['type'] = "cd"
         now_node['name'] = grammar_node['name']
@@ -267,7 +278,7 @@ class LogicalEngine:
             for now_value in line:
                 now_data.append(ExpTreeNode.make_calc_tree(now_value))
             now_node['values'].append(now_data)
-        return
+        return now_node
 
     @staticmethod
     def update_exp_transform(grammar_node):

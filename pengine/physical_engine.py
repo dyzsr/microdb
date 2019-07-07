@@ -12,6 +12,7 @@
 
 import operator as op
 from iod.io_cache_manager import *
+import glo.glovar as glo
 
 
 class PhysicalBlock:
@@ -28,11 +29,15 @@ class PhysicalBlock:
         return data
 
     def table_operator(self, logical_tree):
+        if glo.Debug == 1:
+            print('[Debug] [physical] [table_operator] [input:', logical_tree, ']')
         self.data = IoCacheManager.select_table_entry(logical_tree['name'])
         return self
 
     def map_operator(self, logical_tree):
-        son = self.dfs_plan_tree(logical_tree['son'])
+        if glo.Debug == 1:
+            print('[Debug] [physical] [map_operator] [input:', logical_tree, ']')
+        son = self.dfs_plan_tree(logical_tree['son'][0])
         while True:
             now_data = son.get_next()
             if op.eq(now_data, None):
@@ -47,8 +52,10 @@ class PhysicalBlock:
         return self
 
     def join_operator(self, logical_tree):
+        if glo.Debug == 1:
+            print('[Debug] [physical] [join_operator] [input:', logical_tree, ']')
         for son_node in logical_tree['son']:
-            son = self.dfs_plan_tre(son_node)
+            son = self.dfs_plan_tree(son_node)
             pre_data_set = self.data
             while True:
                 now_data = son.get_next()
@@ -62,7 +69,9 @@ class PhysicalBlock:
         return self
 
     def limit_operator(self, logical_tree):
-        son = self.dfs_plan_tree(logical_tree['son'])
+        if glo.Debug == 1:
+            print('[Debug] [physical] [limit_operator] [input:', logical_tree, ']')
+        son = self.dfs_plan_tree(logical_tree['son'][0])
         while True:
             now_data = son.get_next()
             if op.eq(now_data, None):
@@ -72,7 +81,9 @@ class PhysicalBlock:
         return self
 
     def delete_operator(self, logical_tree):
-        son = self.dfs_plan_tree(logical_tree['son'])
+        if glo.Debug == 1:
+            print('[Debug] [physical] [delete_operator] [input:', logical_tree, ']')
+        son = self.dfs_plan_tree(logical_tree['son'][0])
         while True:
             now_data = son.get_next()
             if op.eq(now_data, None):
@@ -81,7 +92,9 @@ class PhysicalBlock:
         return
 
     def update_operator(self, logical_tree):
-        son = self.dfs_plan_tree(logical_tree['son'])
+        if glo.Debug == 1:
+            print('[Debug] [physical] [update_operator] [input:', logical_tree, ']')
+        son = self.dfs_plan_tree(logical_tree['son'][0])
         while True:
             now_data = son.get_next()
             if op.eq(now_data, None):
@@ -98,11 +111,15 @@ class PhysicalBlock:
 
     # todo： 创建表
     def create_table_operator(self, logical_tree):
+        if glo.Debug == 1:
+            print('[Debug] [physical] [create_table_operator] [input:', logical_tree, ']')
         IoCacheManager.create_table(logical_tree['table'])
         return
 
     def insert_operator(self, logical_tree):
-        if isinstance(logical_tree['columns'], dict):
+        if glo.Debug == 1:
+            print('[Debug] [physical] [insert_operator] [input:', logical_tree, ']')
+        if isinstance(logical_tree['columns'], tuple):
             for now_data in logical_tree['values']:
                 more_data = dict()
                 index = 0
@@ -124,6 +141,8 @@ class PhysicalBlock:
 
     @classmethod
     def dfs_plan_tree(cls, logical_tree):
+        if glo.Debug == 1:
+            print('[Debug] [physical] [dfs_plan_tree] [', logical_tree, ']')
         now_block = PhysicalBlock()
         if op.eq(logical_tree['type'], 'map'):
             now_block.map_operator(logical_tree)

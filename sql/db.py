@@ -1,4 +1,4 @@
-from sqlparser import parser
+from sql.sqlparser import parser
 
 if __name__ == '__main__':
     while True:
@@ -6,5 +6,5 @@ if __name__ == '__main__':
             s = input('> ')
         except EOFError:
             break
-        parser.parse(s)
+        print(type(parser.parse(s)))
 

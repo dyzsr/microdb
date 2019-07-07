@@ -4,6 +4,12 @@ from collections import defaultdict
 
 RESERVED = {
         'create'    : 'CREATE',
+        'drop'      : 'DROP',
+        'delete'    : 'DELETE',
+        'insert'    : 'INSERT',
+        'update'    : 'UPDATE',
+        'select'    : 'SELECT',
+
         'database'  : 'DATABASE',
         'table'     : 'TABLE',
 
@@ -16,14 +22,13 @@ RESERVED = {
         'primary'   : 'PRIMARY',
         'key'       : 'KEY',
         
-        'insert'    : 'INSERT',
-        'into'      : 'INTO',
-        'values'    : 'VALUES',
-        'select'    : 'SELECT',
         'from'      : 'FROM',
         'where'     : 'WHERE',
         'groupby'   : 'GROUPBY',
         'having'    : 'HAVING',
+
+        'into'      : 'INTO',
+        'values'    : 'VALUES',
         'as'        : 'AS',
         'in'        : 'IN',
         'set'       : 'SET',
@@ -37,7 +42,7 @@ RESERVED = {
         }
 
 
-# ============= tokens ===============
+# ============= tokens =====================================
 
 tokens = tuple(RESERVED.values()) + (
         'BOOL',
@@ -60,7 +65,6 @@ tokens = tuple(RESERVED.values()) + (
         'MINUS',
         'MUL',
         'DIV',
-        'UMINUS',
         )
 
 
@@ -143,15 +147,14 @@ precedence = (
 # dictionary of IDifiers
 IDs = {}
 
-#============ rules ==================
+#============ rules ==================================
 
-# Select statement
+# ************** SELECT statement ******************
 
 def p_statement_select(p):
     'statement : selectexpr SEMICOLON' 
     p[0] = p[1]
     print(p[0])
-    return p[0]
     
 
 
@@ -315,7 +318,7 @@ def p_colopexpr_binop(p):
     p[0] = make_opexpr(opname(p[2]), p[1], p[3])
 
 
-# Create statement ********************
+# ***************** CREATE statement ********************
 
 def p_statement_create(p):
     'statement : createexpr SEMICOLON'
@@ -467,13 +470,12 @@ def p_datatype(p):
         p[0] = {'typename': 'nvarchar', 'length': p[3]}
 
 
-# INSERT statement
+# ************** INSERT statement **********************
 
 def p_statement_insert(p):
     'statement : insertexpr SEMICOLON'
     p[0] = p[1]
     print(p[0])
-    return p[0]
 
 # INSERT expressions
 
@@ -496,7 +498,7 @@ def p_insertexpr_values_all(p):
 def p_insertexpr_values_some(p):
     '''
     insertexpr : INSERT INTO ID \
-            LPAR colnamelist RPAR \
+            LPAR idlist RPAR \
             VALUES valuelist
     '''
     p[0] = {
@@ -510,10 +512,10 @@ def p_insertexpr_values_some(p):
                 }
             }
 
-def p_colnamelist(p):
+def p_idlist(p):
     '''
-    colnamelist : ID
-                | ID COMMA colnamelist
+    idlist : ID
+           | ID COMMA idlist
     '''
     if len(p) == 2:
         p[0] = (p[1],)
@@ -605,6 +607,112 @@ def p_colset(p):
     p[0] = {
             'column': p[1],
             'opexpr': p[3]
+            }
+
+
+# ********** UPDATE statement ***************
+
+def p_statement_update(p):
+    'statement : updateexpr SEMICOLON'
+    p[0] = p[1]
+    print(p[0])
+
+
+def p_updateexpr_nowhere(p):
+    '''
+    updateexpr : UPDATE ID SET colsetlist
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'update',
+            'content': {
+                'tablename': p[2],
+                'set': p[4]
+                }
+            }
+
+def p_updateexpr_where(p):
+    '''
+    updateexpr : UPDATE ID SET colsetlist \
+            WHERE filterlist
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'update',
+            'content': {
+                'tablename': p[2],
+                'set': p[4],
+                'filters': p[6]
+                }
+            }
+
+
+# ********** DELETE statement ***************
+
+def p_statement_delete(p):
+    'statement : deleteexpr SEMICOLON'
+    p[0] = p[1]
+    print(p[0])
+
+
+def p_deleteexpr_nowhere(p):
+    '''
+    deleteexpr : DELETE FROM ID \
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'delete',
+            'content': {
+                'tablename': p[3]
+                }
+            }
+
+def p_deleteexpr_where(p):
+    '''
+    deleteexpr : DELETE FROM ID \
+            WHERE filterlist
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'delete',
+            'content': {
+                'tablename': p[3],
+                'filters': p[5]
+                }
+            }
+
+
+# ********** DROP statement *****************
+
+def p_statement_drop(p):
+    'statement : dropexpr SEMICOLON'
+    p[0] = p[1]
+    print(p[0])
+
+def p_dropexpr_database(p):
+    '''
+    dropexpr : DROP DATABASE ID
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'drop',
+            'content': {
+                'type': 'database',
+                'name': p[3]
+                }
+            }
+
+def p_dropexpr_table(p):
+    '''
+    dropexpr : DROP TABLE idlist
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'drop',
+            'content': {
+                'type': 'table',
+                'names': p[3]
+                }
             }
 
 

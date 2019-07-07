@@ -426,3 +426,158 @@ SET c1 = 1, c2 = c3 * (c5 + c6);
   }
 }
 ```
+
+## 6. UPDATE语句
+
+更新一张表中的数据
+
+### 6.1 普通更新操作
+
+``` sql
+UPDATE tb SET c1 = c2 + c3;
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'update', 
+  'content': {
+    'tablename': 'tb', 
+    'set': (
+      {
+        'column': {
+          'type': 'column', 
+          'name': 'c1'
+         }, 
+        'opexpr': {
+          'type': 'opexpr', 
+          'operator': '+', 
+          'operands': (
+            {'type': 'column', 'name': 'c2'}, 
+            {'type': 'column', 'name': 'c3'}
+          )
+        }
+      },
+    )
+  }
+}
+```
+
+### 6.2 含有WHERE的更新
+
+``` sql
+UPDATE tb SET c1 = -2.4 WHERE c2 = TRUE;
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'update', 
+  'content': {
+    'tablename': 'tb', 
+    'set': (
+      {
+        'column': {'type': 'column', 'name': 'c1'}, 
+        'opexpr': {
+          'type': 'opexpr', 
+          'operator': 'uminus', 
+          'operands': (2.4,)
+        }
+      },
+    ), 
+    'filters': {
+      'type': 'opexpr', 
+      'operator': '=', 
+      'operands': (
+        {'type': 'column', 'name': 'c2'}, 
+        True
+      )
+    }
+  }
+}
+```
+
+## 7. DELETE语句
+
+从一张表中删除数据
+
+### 7.1 普通删除
+
+``` sql
+DELETE FROM tb;
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'delete', 
+  'content': {
+    'tablename': 'tb'
+  }
+}
+```
+
+### 7.2 含有WHERE的删除
+
+``` sql
+DELETE FROM tb WHERE c1 > 50000;
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'delete', 
+  'content': {
+    'tablename': 'tb', 
+    'filters': {
+      'type': 'opexpr', 
+      'operator': '>', 
+      'operands': (
+        {'type': 'column', 'name': 'c1'}, 
+        50000
+      )
+    }
+  }
+}
+```
+
+
+## 8. DROP语句
+
+### 8.1 DROP DATABASE
+
+删除数据库
+
+``` sql
+DROP DATABASE abc;
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'drop', 
+  'content': {
+    'type': 'database', 
+    'name': 'abc'
+  }
+}
+```
+
+### 8.2 DROP TABLE
+
+删除一张表
+
+``` sql
+DROP TABLE tb1, tb2;
+```
+
+``` py
+{
+  'type': 'query', 
+  'name': 'drop', 
+  'content': {
+    'type': 'table', 
+    'names': ('tb1', 'tb2')
+  }
+}
+```

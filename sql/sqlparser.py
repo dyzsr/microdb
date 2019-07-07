@@ -160,13 +160,18 @@ def p_statement_select(p):
 
 # select expression
 
-def p_selectexpr_nofilter(p):
-    'selectexpr : SELECT columnlist FROM tablelist'
+def p_selectexpr_from(p):
+    '''
+    selectexpr : SELECT columnlist 
+               | SELECT columnlist FROM tablelist
+    '''
     p[0] = {
             'type': 'query',
             'name': 'select',
-            'content': {'tables': p[4], 'columns': p[2]}
+            'content': {'columns': p[2]}
             }
+    if len(p) > 3 and p[3] == 'from':
+        p[0]['content']['tables'] = p[4]
 
 def p_selectexpr_where(p):
     'selectexpr : SELECT columnlist FROM tablelist WHERE filterlist'
@@ -182,8 +187,8 @@ def p_selectexpr_where(p):
 def p_columnlist(p):
     '''
     columnlist : MUL
-               | column
-               | column COMMA columnlist
+               | columnexpr
+               | columnexpr COMMA columnlist
     '''
     if len(p) == 2:
         p[0] = (p[1],)
@@ -241,11 +246,7 @@ def make_opexpr(operator, *operands):
             'operator': operator, 
             'operands': operands}
 
-#_opmap = {'PLUS': '+', 'MINUS': '-', 'MUL': '*', 'DIV': '/'}
-
 def opname(operator):
-#    if operator in _opmap:
-#        return _opmap[operator]
     return operator.lower()
 
 
@@ -275,12 +276,12 @@ def p_filterlist_not(p):
 
 def p_filter(p):
     '''
-    filter : colopexpr LT colopexpr
-           | colopexpr LTE colopexpr
-           | colopexpr GT colopexpr
-           | colopexpr GTE colopexpr
-           | colopexpr EQ colopexpr
-           | colopexpr NE colopexpr
+    filter : columnexpr LT columnexpr
+           | columnexpr LTE columnexpr
+           | columnexpr GT columnexpr
+           | columnexpr GTE columnexpr
+           | columnexpr EQ columnexpr
+           | columnexpr NE columnexpr
     '''
     p[0] = make_opexpr(opname(p[2]), p[1], p[3])
 
@@ -288,32 +289,29 @@ def p_filter(p):
 
 # column operation expression
 
-def p_colopexpr_single(p):
+def p_columnexpr_single(p):
     '''
-    colopexpr : column
-              | BOOL
-              | INT
-              | FLOAT
-              | STRING
+    columnexpr : column
+               | datum
     '''
     p[0] = p[1]
 
-def p_colopexpr_uminus(p):
+def p_columnexpr_uminus(p):
     '''
-    colopexpr : MINUS colopexpr %prec UMINUS
+    columnexpr : MINUS columnexpr %prec UMINUS
     '''
     p[0] = make_opexpr('uminus', p[2])
 
-def p_colopexpr_parthesis(p):
-    'colopexpr : LPAR colopexpr RPAR'
+def p_columnexpr_parthesis(p):
+    'columnexpr : LPAR columnexpr RPAR'
     p[0] = p[2]
 
-def p_colopexpr_binop(p):
+def p_columnexpr_binop(p):
     '''
-    colopexpr : colopexpr PLUS colopexpr
-              | colopexpr MINUS colopexpr
-              | colopexpr MUL colopexpr
-              | colopexpr DIV colopexpr
+    columnexpr : columnexpr PLUS columnexpr
+               | columnexpr MINUS columnexpr
+               | columnexpr MUL columnexpr
+               | columnexpr DIV columnexpr
     '''
     p[0] = make_opexpr(opname(p[2]), p[1], p[3])
 
@@ -544,20 +542,25 @@ def p_values(p):
         p[0] = (p[1],) + p[3]
         
 
-def p_value(p):
+def p_datum(p):
     '''
-    value : BOOL
+    datum : BOOL
           | INT 
           | FLOAT 
           | STRING
     '''
     p[0] = p[1]
 
+
+def p_value(p):
+    'value : datum'
+    p[0] = p[1]
+
 def p_value_parenthesis(p):
     '''
     value : LPAR value RPAR
     '''
-    p[0] = p[1]
+    p[0] = p[2]
 
 def p_value_opexpr(p):
     '''
@@ -602,7 +605,7 @@ def p_colsetlist(p):
 
 def p_colset(p):
     '''
-    colset : column EQ colopexpr
+    colset : column EQ columnexpr
     '''
     p[0] = {
             'column': p[1],

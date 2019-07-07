@@ -9,9 +9,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
-
-
-dirPath = "D:\\dbms\\store"
+from glo.glovar import *
 
 
 class StoreManager:

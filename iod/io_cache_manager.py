@@ -13,14 +13,12 @@
 # ----1. pickle
 # ----
 
-from io.io_cache import *
-from io.io_in_out import *
+from iod.io_cache import *
+from iod.io_in_out import *
 
 import operator as op
 import os
-
-
-dirPath = "D:\\dbms\\store"
+from glo.glovar import *
 
 
 class IoCacheManager:
@@ -90,6 +88,16 @@ class IoCacheManager:
         table_index = cls.find_cache_block(table_name)
         IoCacheManager.list_cache_block[table_index]\
             .insert_table_entry(entry)
+        return
+
+    # 增list
+    # fixme: 需要先增加元信息
+    @classmethod
+    def insert_table_entry_list(cls, table_name, entry_list):
+        cls.check_table_load(table_name)
+        table_index = cls.find_cache_block(table_name)
+        IoCacheManager.list_cache_block[table_index] \
+            .insert_table_entry(entry_list)
         return
 
     # 删

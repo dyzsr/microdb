@@ -33,32 +33,35 @@ import glo.glovar as glo
 #
 
 # 不知道算逻辑还是物理
-class CheckTreeNode:
+class ExpTreeNode:
     # 默认申请的节点为真值
-    def __init__(self, otype = 'value', value=1):
+    def __init__(self, otype='value'):
         # 逻辑运算符: And, or, not
         # 算数运算符：+,-,*,/
         # 关系运算符：>,<,=,(<>? !=)
         # columns,value
         # columns= <lson:表名> , <rson:列名>
         self.type = otype
-        #
         self.lson = None
         self.rson = None
         return
 
     # 计算的过程
-    def calc_data(self, data):
-        if re.search('value', self.type):
+    def calc_data(self, data=None):
+        if re.search(r'value', self.type):
             return self.lson
-        if re.search('columns', self.type):
-                return data[self.lson][self.rson]
+        if re.search(r'columns', self.type):
+            if op.eq(self.lson, '*'):
+                for (k, v) in data:
+                    if self.rson in v.keys():
+                        return v[self.rson]
+            return data[self.lson][self.rson]
         # 一元运算符,二元运算符
         # 更新，直接用字符串
         # 逻辑运算符: And, or, not
         # 算数运算符：+,-,*,/
         # 关系运算符：>,<,=,(<>? !=)
-        # Todo: 合法性检验
+        # todo: 合法性检验
         # And
         if re.search(r"and", self.type):
             return self.lson.calc_data(data) and self.rson.calc_data(data)
@@ -92,23 +95,41 @@ class CheckTreeNode:
     def check_data_main(self, data):
         return self.calc_data(data) != 0
 
+    #
+    def debug_calc_tree(self):
+        print('[Debug] [Calc Tree] [', self.type, 'lson', type(self.lson), 'rson', type(self.rson) ,']');
+        if op.eq(self.type, 'value'):
+            print('[Debug] [Calc Tree] [Value]', self.lson)
+        elif op.eq(self.type, 'column'):
+            print('[Debug] [Calc Tree] [Column]', self.lson, self.rson)
+        elif re.match(r'\+|-|\*|\|and|or|>|<|=|!=', self.type):
+            self.lson.debug_calc_tree()
+            self.rson.debug_calc_tree()
+        else:
+            self.lson.debug_calc_tree()
+
     # 建树的过程
     @classmethod
-    def make_check_tree(cls, grammar_node):
-        if glo.Debug==1:
-            print('[Debug] [make_check_tree] [input:', grammar_node)
-        now_node = CheckTreeNode()
+    def make_calc_tree(cls, grammar_node):
+        if glo.Debug == 1:
+            print('[Debug] [make_check_tree] [input:', grammar_node,']')
+        now_node = ExpTreeNode()
         if isinstance(grammar_node, dict):
             if op.eq(grammar_node['type'], 'opexpr'):
                 oper = grammar_node['operator']
                 now_node.type = oper
                 if re.match(r'\+|-|\*|\|and|or|>|<|=|!=', oper):
-                    now_node.lson = cls.make_check_tree(grammar_node['operands'][0])
-                    now_node.lson = cls.make_check_tree(grammar_node['operands'][1])
+                    if glo.Debug == 1:
+                        print('[Debug] [make_check_tree] [re1]:', oper, ']')
+                    now_node.lson = cls.make_calc_tree(grammar_node['operands'][0])
+                    now_node.rson = cls.make_calc_tree(grammar_node['operands'][1])
                 elif re.match(r'not|uminus', oper):
-                    now_node.lson = cls.make_check_tree(grammar_node['operands'][0])
+                    if glo.Debug == 1:
+                        print('[Debug] [make_check_tree] [re2]:', oper, ']')
+                    now_node.lson = cls.make_calc_tree(grammar_node['operands'][0])
                 return now_node
             oper = grammar_node['type']
+            now_node.type = oper
             if op.eq(oper, 'column'):
                 if 'table' in grammar_node.keys():
                     now_node.lson = grammar_node['table']
@@ -116,7 +137,9 @@ class CheckTreeNode:
                     now_node.lson = '*'
                 now_node.rson = grammar_node['name']
         else:
+            now_node.type = 'value'
             now_node.lson = grammar_node
+        return now_node
 
 
 class LogicalEngine:
@@ -140,24 +163,26 @@ class LogicalEngine:
         now_node['son'] = []
         now_node['type'] = 'join'
         for table in grammar_node:
-            if op.eq(table['type'], 'table'):
+            if 'source' in table:
+                now_node['son'].append(LogicalEngine.dfs_grammar_tree(table['source']))
+            else:
                 now_node['son'].append(LogicalEngine.table_transform(table))
-            elif op.eq(table['type'], 'query'):
-                now_node['son'].append(LogicalEngine.dfs_grammar_tree(table))
         return now_node
 
     # 处理select中的where
     @staticmethod
     def limit_transform(grammar_node=None):
+        if glo.Debug == 1:
+            print('[Debug] [limit_transform] [input:', grammar_node,']')
         now_node = dict()
         now_node['type'] = "limit"
         now_node['son'] = []
         if op.eq(grammar_node, None):
-            now_node['check'] = CheckTreeNode()
+            now_node['check'] = ExpTreeNode()
         else:
-            now_node['check'] = CheckTreeNode().make_check_tree(grammar_node)
+            now_node['check'] = ExpTreeNode().make_calc_tree(grammar_node)
+            now_node['check'].debug_calc_tree()
         return now_node
-
 
     # 处理select中的投影,select
     # todo: column也可以是表达式
@@ -198,20 +223,20 @@ class LogicalEngine:
     # 对于create请求，做进一步的转发
     @staticmethod
     def create_transform(grammar_node):
-        if glo.Debug==1:
+        if glo.Debug == 1:
             print('[Debug] [create_transform] [input:', grammar_node)
         if op.eq(grammar_node['type'], 'database'):
             return LogicalEngine.create_database_transform(grammar_node)
         return
 
     # 创建数据库的表
-    #　todo:物理计划执行的时候要知道数据库的元信息
+    # todo:物理计划执行的时候要知道数据库的元信息,这里还没处理columns表
     @staticmethod
     def create_table_transform(grammar_node):
 
         now_node = dict()
         now_node['type'] = "ct"
-        now_node['name'] = grammar_node['name']
+        now_node['table'] = grammar_node['name']
         now_node['columns'] =grammar_node['columns']
         now_node['primary'] = grammar_node['constraints']
         return
@@ -223,9 +248,11 @@ class LogicalEngine:
         now_node['name'] = grammar_node['name']
         return now_node
 
+    # 增加条目
+    # fixme:嵌入表达式
     @staticmethod
     def insert_transform(grammar_node):
-        if glo.Debug==1:
+        if glo.Debug == 1:
             print('[Debug] [insert_transform] [input:', grammar_node)
         now_node = dict()
         now_node['type'] = 'iv'
@@ -234,16 +261,21 @@ class LogicalEngine:
             now_node['columns'] = grammar_node['columns']
         else:
             now_node['columns'] = '*'
-        now_node['value'] = grammar_node['values']
+        now_node['values'] = []
+        for line in grammar_node['values']:
+            now_data = []
+            for now_value in line:
+                now_data.append(ExpTreeNode.make_calc_tree(now_value))
+            now_node['values'].append(now_data)
         return
-
 
     @staticmethod
     def update_exp_transform(grammar_node):
         now_node = dict()
         now_node['type'] = 'calc'
         now_node['column'] = grammar_node['column']['name']
-        now_node['calc'] = CheckTreeNode().make_check_tree(grammar_node['opexpr'])
+        now_node['calc'] = ExpTreeNode().make_calc_tree(grammar_node['opexpr'])
+        now_node['calc'].debug_calc_tree()
         return now_node
 
     # 更新

@@ -6,7 +6,7 @@
 
 For "query":
 
-| key | value|
+| key | value |
 | - | - |
 | type | 'query' | 
 | name | 'select','create','insert' |
@@ -27,13 +27,13 @@ For "table" :
 | name | table_name |
 | *source | query | 
 
-For 
 
 ## 关系代数树数据结构
 
 使用dict数据结构
 .type
-.name
+.lson
+.rson
 
 ### 对于投影
 
@@ -68,7 +68,7 @@ For
 | 内容 | 表 |
 
 #### check_tree判断树数据结构
-``
+```
 class CheckTreeNode{
     .type = 'and','or','not','=','>','<','leaf','+','-'
     .lson = 如果是and或者or,或者not
@@ -79,11 +79,11 @@ class CheckTreeNode{
     def check_data_main(data)
         return check_data(data)!=0
 }
-``
+```
 
-``
+```
 not (((a = b) or (c >d )) and (d<e))
-``
+```
 
 ### ast2log结果
 

@@ -9,4 +9,4 @@ if __name__ == '__main__':
             break
         res = parser.parse(s)
         print(json.dumps(res, indent = 2))
-
+        print(type(res))

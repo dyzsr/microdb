@@ -7,6 +7,7 @@
 # 数据存储 dict
 
 import operator as op
+import glo.glovar as glo
 
 
 class CacheBlock:
@@ -16,6 +17,8 @@ class CacheBlock:
 
     # 增
     def insert_table_entry(self, entry):
+        if glo.Debug == 1:
+            print('[Debug] [CacheBlock] [insert_table_entry] [input:', entry, ']')
         self.data.append(entry)
         return
 
@@ -37,11 +40,15 @@ class CacheBlock:
 
     # all_read
     def all_table_read(self):
+        if glo.Debug == 1:
+            print('[Debug] [CacheBlock] [all_table_read] [', self.data, ']')
         return self.data
 
     # all_write
     # get data and write in memory
     def all_table_write(self, list_object):
+        if op.eq(list_object, None):
+            return
         self.data = []
         for data_object in list_object:
             self.data.append(data_object)

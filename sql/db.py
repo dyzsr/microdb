@@ -1,4 +1,5 @@
-from sqlparser import parser
+from sql.sqlparser import parser
+import json
 
 if __name__ == '__main__':
     while True:
@@ -6,5 +7,6 @@ if __name__ == '__main__':
             s = input('> ')
         except EOFError:
             break
-        parser.parse(s)
+        res = parser.parse(s)
+        print(json.dumps(res, indent = 2))
 

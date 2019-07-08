@@ -12,6 +12,7 @@ For "query":
 | name | 'select','create','insert' |
 | content | 如下定义 |
 
+
 For "content" :
 
 | key | value | 
@@ -20,10 +21,11 @@ For "content" :
 | columns | List\<columns\> | 
 | filters |  | 
 
+
 For "table" :
 | key | value |
 | - | - |
-| type | 'table' |
+| type | \'table\' |
 | name | table_name |
 | *source | query | 
 

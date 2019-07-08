@@ -44,6 +44,7 @@ class ExpTreeNode:
         self.type = otype
         self.lson = None
         self.rson = None
+        self.name = ""
         return
 
     # 计算的过程
@@ -126,27 +127,32 @@ class ExpTreeNode:
             if op.eq(grammar_node['type'], 'opexpr'):
                 oper = grammar_node['operator']
                 now_node.type = oper
-                if re.match(r'\+|-|\*|\|and|or|>|<|=|!=', oper):
+                if re.match(r'\+|-|\*|\|and|or|>|<|=|!=|<=|>=', oper):
                     if glo.Debug == 1:
                         print('[Debug] [make_check_tree] [re1]:', oper, ']')
                     now_node.lson = cls.make_calc_tree(grammar_node['operands'][0])
                     now_node.rson = cls.make_calc_tree(grammar_node['operands'][1])
+                    now_node.name = '(' + now_node.lson.name+')'+oper+'('+ now_node.rson.name + ')'
                 elif re.match(r'not|uminus', oper):
                     if glo.Debug == 1:
                         print('[Debug] [make_check_tree] [re2]:', oper, ']')
                     now_node.lson = cls.make_calc_tree(grammar_node['operands'][0])
+                    now_node.name = oper + '(' +now_node.lson.name + ')'
                 return now_node
             oper = grammar_node['type']
             now_node.type = oper
             if op.eq(oper, 'column'):
                 if 'table' in grammar_node.keys():
                     now_node.lson = grammar_node['table']
+                    now_node.name = now_node.lson+'.' + grammar_node['name']
                 else:
                     now_node.lson = '*'
+                    now_node.name = grammar_node['name']
                 now_node.rson = grammar_node['name']
         else:
             now_node.type = 'value'
             now_node.lson = grammar_node
+            now_node.name = str(grammar_node)
         return now_node
 
 
@@ -197,7 +203,7 @@ class LogicalEngine:
         return now_node
 
     # 处理select中的投影,select
-    # todo: column也可以是表达式
+    # updata column can be exp
     @staticmethod
     def map_transform(columns):
         if glo.Debug == 1:
@@ -210,7 +216,7 @@ class LogicalEngine:
         else:
             now_node['columns'] = []
             for column in columns:
-                now_node['columns'].append(column['name'])
+                now_node['columns'].append(ExpTreeNode().make_calc_tree(column))
         return now_node
 
     # 处理选择select

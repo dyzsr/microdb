@@ -48,7 +48,7 @@ class PhysicalBlock:
             else:
                 more_data = dict()
                 for column in logical_tree['columns']:
-                    more_data[column] = now_data.now_data[column]
+                    more_data[column.name] = column.calc_data(now_data)
                 self.data.append(more_data)
         return self
 

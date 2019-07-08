@@ -1,5 +1,7 @@
 CREATE TABLE test1 (num INT NOT NULL, str VARCHAR(10), bool BOOLEAN, PRIMARY KEY(num, bool));
 
+CREATE DATABASE db1;
+
 INSERT INTO test1 (num, str, bool) VALUES (1, 'abc' ,TRUE), (-1, 'def', FALSE);
 
 INSERT INTO test1 (num, str, bool) VALUES (-1, 'def', FALSE);

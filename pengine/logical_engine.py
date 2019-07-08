@@ -68,7 +68,7 @@ class ExpTreeNode:
         # 逻辑运算符: And, or, not
         # 算数运算符：+,-,*,/
         # 关系运算符：>,<,=,(<>? !=)
-        # todo: 合法性检验
+        # todo: 计算表达式过程的合法性检验
         # And
         if re.search(r"and", self.type):
             return self.lson.calc_data(data) and self.rson.calc_data(data)
@@ -250,7 +250,7 @@ class LogicalEngine:
         return LogicalEngine.create_table_transform(grammar_node)
 
     # 创建数据库的表
-    # todo:物理计划执行的时候要知道数据库的元信息,这里还没处理columns表
+    # 实际处理放在物理执行计划阶段
     @staticmethod
     def create_table_transform(grammar_node):
         if glo.Debug == 1:
@@ -259,7 +259,7 @@ class LogicalEngine:
         now_node['type'] = "ct"
         now_node['table'] = grammar_node['name']
         now_node['columns'] =grammar_node['columns']
-        now_node['primary'] = grammar_node['constraints']
+        now_node['constraints'] = grammar_node['constraints']
         return now_node
 
     @staticmethod
@@ -272,7 +272,7 @@ class LogicalEngine:
         return now_node
 
     # 增加条目
-    # fixme:嵌入表达式
+    # insert的嵌入表达式已完成
     @staticmethod
     def insert_transform(grammar_node):
         if glo.Debug == 1:

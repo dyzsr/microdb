@@ -106,18 +106,51 @@ class PhysicalBlock:
             new_data = copy.deepcopy(now_data)
             for trans in logical_tree['trans']:
                 new_data[logical_tree['table']][trans['column']] = trans['calc'].calc_data(now_data)
-            IoCacheManager.update_table_entry(logical_tree['table'],now_data ,new_data)
+            IoCacheManager.update_table_entry(logical_tree['table'], now_data , new_data)
         return
 
     # todo: 创建数据库
     def create_database_operator(self, logical_tree):
+        if glo.Debug == 1:
+            print('[Debug] [physical] [create_database_operator] [input:', logical_tree, ']')
+        IoCacheManager.create_database(logical_tree['name'])
         return
 
-    # todo： 创建表
-    def create_table_operator(self, logical_tree):
+    # 创建表
+    @staticmethod
+    def create_table_operator(logical_tree):
         if glo.Debug == 1:
             print('[Debug] [physical] [create_table_operator] [input:', logical_tree, ']')
-        IoCacheManager.create_table(logical_tree['table'])
+        list_column = []
+        list_primary = []
+        list_null = []
+        if 'constraints' in logical_tree.keys():
+            if 'primary key' in logical_tree['constraints']:
+                for column in logical_tree['constraints']['primary key']:
+                    list_primary.append(column)
+            if 'not null' in logical_tree['constraints']:
+                for column in logical_tree['constraints']['not null']:
+                    list_null.append(column)
+        if glo.Debug == 1:
+            print('[Debug] [physical] [create_table_operator] [list_primary:', list_primary, ']')
+            print('[Debug] [physical] [create_table_operator] [list_null', list_null, ']')
+
+        for column in logical_tree['columns']:
+            now_column = dict()
+            now_column['column'] = column['name']
+            if 'length' in column['datatype'].keys():
+                now_column['datatype'] = column['datatype']['typename']\
+                                           + '(' + str(column['datatype']['length'])+')'
+            else:
+                now_column['datatype'] = column['datatype']['typename']
+            now_column['primary'] = False
+            if column['name'] in list_primary:
+                now_column['primary'] = True
+            now_column['null'] = True
+            if column['name'] in list_null:
+                now_column['null'] = False
+            list_column.append(now_column)
+        IoCacheManager.create_table(logical_tree['table'], list_column)
         return
 
     def insert_operator(self, logical_tree):
@@ -140,9 +173,7 @@ class PhysicalBlock:
                 more_data = []
                 for values in now_data:
                     more_data.append(values.calc_data())
-                add_data = dict()
-                add_data[logical_tree['table']] = more_data
-                IoCacheManager.insert_table_entry_list(logical_tree['table'], add_data)
+                IoCacheManager.insert_table_entry_list(logical_tree['table'], more_data)
         return
 
     @classmethod

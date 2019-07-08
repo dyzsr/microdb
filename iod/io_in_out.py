@@ -11,6 +11,8 @@ try:
 except ImportError:
     import pickle
 import json
+import os
+import operator as op
 
 
 class StoreManager:
@@ -34,31 +36,43 @@ class StoreManager:
 
     @staticmethod
     def store_table_file(list_string, table_name):
-        table_file = open(dirPath+'\\'+table_name, "w")
+        tablePath = dirPath + '\\' + databasePath + '\\' + table_name
+        table_file = open(tablePath + '\\' + 'data', "w")
         for line in list_string:
             if Debug == 1:
                 print('[Debug] [StoreManager] [store_table_file] [line:', line, ']')
             table_file.write(line+"\n")
         table_file.close()
 
+
+    @staticmethod
+    def get_table_metadata(table_name):
+        tablePath = dirPath + '\\' + databasePath + '\\' + table_name
+        if op.eq(os.path.exists(tablePath), False):
+            print("[Error] [Table is not accessible.]")
+            return
+        list_string = open(tablePath + '\\' + 'meta', "r")
+        list_meta = []
+        for line in list_string.readlines():
+            list_meta.append(json.loads(line))
+        return list_meta
+
     @staticmethod
     def read_table(table_name):
-        try:
-            fp = open(dirPath+'\\'+table_name, "r")
-            fp.close()
-        except IOError:
-            print("Table is not accessible.")
+        tablePath = dirPath + '\\' + databasePath + '\\' + table_name
+        if op.eq(os.path.exists(tablePath), False):
+            print("[Error] [Table is not accessible.]")
             return
-        list_string = StoreManager.load_table_file(table_name)
+        list_string = StoreManager.load_table_file(tablePath)
         list_object = []
         for object_string in list_string:
             list_object.append(StoreManager.string_to_object(object_string))
         return list_object
 
     @staticmethod
-    def load_table_file(table_name):
+    def load_table_file(tablePath):
         list_string = []
-        now_table_file = open(dirPath+'\\'+table_name, "r")
+        now_table_file = open(tablePath+'\\'+'data', "r")
         for line in now_table_file.readlines():
             list_string.append(line)
         now_table_file.close()

@@ -14,6 +14,7 @@ class CacheBlock:
 
     def __init__(self):
         self.data = []
+        self.meta = dict()
 
     # 增
     def insert_table_entry(self, entry):
@@ -52,5 +53,9 @@ class CacheBlock:
         self.data = []
         for data_object in list_object:
             self.data.append(data_object)
+
+    def get_metadata(self, object):
+        self.meta = object
+        return
 
 

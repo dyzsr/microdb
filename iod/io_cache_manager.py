@@ -66,6 +66,10 @@ class IoCacheManager:
         cls.list_cache_block_name[cache_index] = table_name
         cls.list_cache_block[cache_index].\
             all_table_write(StoreManager.read_table(table_name))
+        cls.list_cache_block[cache_index].\
+            get_metadata(StoreManager.get_table_metadata(table_name))
+        if glo.Debug == 1:
+            print('[Debug] [IoCacheManager] [load_right_now] [metadata:', cls.list_cache_block[cache_index].meta, ']')
         return
 
     # 立即表载出
@@ -84,7 +88,7 @@ class IoCacheManager:
             cls.load_right_now(table_name)
         return
 
-    # 增
+    # 增条目
     @classmethod
     def insert_table_entry(cls, table_name, entry):
         if glo.Debug == 1:
@@ -93,6 +97,8 @@ class IoCacheManager:
         table_index = cls.find_cache_block(table_name)
         if glo.Debug == 1:
             print('[Debug] [IoCacheManager] [insert_table_entry] [table_index:', table_index, ']')
+        # todo : 增加数据时的合法性校验放在哪个地方做check data
+        #
         IoCacheManager.list_cache_block[table_index]\
             .insert_table_entry(entry)
         if glo.Debug == 1:
@@ -101,14 +107,21 @@ class IoCacheManager:
         cls.store_right_now(table_index)
         return
 
-    # 增list
-    # fixme: 需要先增加元信息
+    # 增条目时不指定column,则利用元信息list
     @classmethod
     def insert_table_entry_list(cls, table_name, entry_list):
         cls.check_table_load(table_name)
         table_index = cls.find_cache_block(table_name)
-        IoCacheManager.list_cache_block[table_index] \
-            .insert_table_entry(entry_list)
+        if op.eq(len(entry_list), len(IoCacheManager.list_cache_block[table_index].meta)):
+            now_entry = dict()
+            now_entry[table_name] = dict()
+            index = 0
+            for column in IoCacheManager.list_cache_block[table_index].meta:
+                now_entry[table_name][column['column']] = entry_list[index]
+                index += 1
+            IoCacheManager.list_cache_block[table_index] \
+                .insert_table_entry(now_entry)
+
         return
 
     # 删
@@ -139,36 +152,41 @@ class IoCacheManager:
 
     # 创表
     @classmethod
-    def create_table(cls, table_name):
-        try:
-            fp = open(dirPath+'\\'+table_name, "r")
+    def create_table(cls, table_name, columns):
+        # if op.eq(databasePath,""):
+        #     print("[Error] [Don't use a database or database don't exist]")
+        #     return
+
+        tablePath=dirPath+'\\'+databasePath+'\\'+table_name
+        if glo.Debug == 1:
+            print('[Debug] [IoCacheManager] [create_table] [input:', tablePath, table_name, ']')
+        #  tablePath = dirPath + '\\' + table_name
+        if op.eq(os.path.exists(tablePath), False):
+            os.makedirs(tablePath)
+            fp = open(tablePath +'\\'+'meta', "w")
+            for column in columns:
+                fp.write(json.dumps(column)+"\n")
             fp.close()
-            print("[Error],[IO,Table_name is exited!]\n")
-        except IOError:
-            if op.eq(os.path.exists(dirPath), False):
-                os.makedirs(dirPath)
-            fp = open(dirPath+'\\'+table_name, "w")
+            fp = open(tablePath + '\\' + 'data', "w")
             fp.close()
-            return
+        else:
+            print("[Error] [Table_name is exited!]\n")
+        #   fp = open(dirPath + '\\' + table_name, "r")
+        #    fp = open(dirPath+'\\'+table_name, "r")
         return
 
     # 创数据库
     @classmethod
     def create_database(cls, database_name):
-        try:
-          #  fp = open(dirPath + database_name, "r")
-            fp = open(dirPath + database_name, "r")
-            fp.close()
-            print("[Error],[IO,Table_name is exited!]\n")
-        except IOError:
-
-          #  fp = open(dirPath + database_name, "w")
-            fp = open(dirPath + database_name, "w")
-            fp.close()
-            return
+        schemaPath = dirPath + '\\' +database_name
+        if op.eq(os.path.exists(schemaPath), False):
+            os.makedirs(schemaPath)
+        else:
+            print("[Error] [database is exited!]\n")
         return
 
     # 删表
+    # todo: change data file
     @classmethod
     def delete_table(cls, table_name):
         try:

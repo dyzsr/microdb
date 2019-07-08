@@ -10,16 +10,17 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
+import json
 
 
 class StoreManager:
     @staticmethod
     def object_to_string(obj):
-        return pickle.dumps(obj)
+        return json.dumps(obj)
 
     @staticmethod
     def string_to_object(line):
-        return pickle.loads(line)
+        return json.loads(line)
 
     @staticmethod
     def write_table(list_object, table_name):
@@ -33,17 +34,17 @@ class StoreManager:
 
     @staticmethod
     def store_table_file(list_string, table_name):
-        table_file = open(dirPath+'\\'+table_name, "wb")
+        table_file = open(dirPath+'\\'+table_name, "w")
         for line in list_string:
             if Debug == 1:
                 print('[Debug] [StoreManager] [store_table_file] [line:', line, ']')
-            table_file.write(line)
+            table_file.write(line+"\n")
         table_file.close()
 
     @staticmethod
     def read_table(table_name):
         try:
-            fp = open(dirPath+'\\'+table_name, "rb")
+            fp = open(dirPath+'\\'+table_name, "r")
             fp.close()
         except IOError:
             print("Table is not accessible.")
@@ -57,7 +58,7 @@ class StoreManager:
     @staticmethod
     def load_table_file(table_name):
         list_string = []
-        now_table_file = open(dirPath+'\\'+table_name, "rb")
+        now_table_file = open(dirPath+'\\'+table_name, "r")
         for line in now_table_file.readlines():
             list_string.append(line)
         now_table_file.close()

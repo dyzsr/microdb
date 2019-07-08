@@ -12,6 +12,7 @@
 
 import operator as op
 from iod.io_cache_manager import *
+import copy
 import glo.glovar as glo
 
 
@@ -56,9 +57,12 @@ class PhysicalBlock:
             print('[Debug] [physical] [join_operator] [input:', logical_tree, ']')
         for son_node in logical_tree['son']:
             son = self.dfs_plan_tree(son_node)
-            pre_data_set = self.data
+            pre_data_set = copy.deepcopy(self.data)
             while True:
                 now_data = son.get_next()
+                if glo.Debug == 1:
+                    print('[Debug] [physical] [join_operator2] [', now_data, ']',
+                          '[', pre_data_set, ']', '[', len(pre_data_set), ']')
                 if op.eq(now_data, None):
                     break
                 if len(pre_data_set) == 0:
@@ -121,6 +125,8 @@ class PhysicalBlock:
             print('[Debug] [physical] [insert_operator] [input:', logical_tree, ']')
         if isinstance(logical_tree['columns'], tuple):
             for now_data in logical_tree['values']:
+                if glo.Debug == 1:
+                    print('[Debug] [physical] [insert_operator2] [', now_data, ']')
                 more_data = dict()
                 index = 0
                 for column in logical_tree['columns']:

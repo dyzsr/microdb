@@ -311,7 +311,7 @@ CREATE TABLE <table-name> (
 } 
 ```
 
-### 4.1 CREATE DATABASE
+### CREATE DATABASE
 
 ``` sql
 CREATE DATABASE db1;
@@ -328,7 +328,7 @@ CREATE DATABASE db1;
 }
 ```
 
-### 4.2 CREATE TABLE
+### CREATE TABLE
 
 ``` sql
 CREATE TABLE hehe (
@@ -402,7 +402,7 @@ SET <col1-name> = <expression>
 }
 ```
 
-### 5.1 INSERT VALUES
+### INSERT VALUES
 
 ``` sql
 INSERT INTO tb VALUES
@@ -455,7 +455,7 @@ INSERT INTO tb (c1, c2) VALUES (1, 3);
 }
 ```
 
-### 5.2 INSERT SET
+### INSERT SET
 
 ``` sql
 INSERT INTO tb 
@@ -503,7 +503,7 @@ SET c1 = 1, c2 = c3 * (c5 + c6);
 
 更新一张表中的数据
 
-### 6.1 普通更新操作
+### 普通更新操作
 
 ``` sql
 UPDATE tb SET c1 = c2 + c3;
@@ -535,7 +535,7 @@ UPDATE tb SET c1 = c2 + c3;
 }
 ```
 
-### 6.2 含有WHERE的更新
+### 含有WHERE的更新
 
 ``` sql
 UPDATE tb SET c1 = -2.4 WHERE c2 = TRUE;
@@ -573,7 +573,7 @@ UPDATE tb SET c1 = -2.4 WHERE c2 = TRUE;
 
 从一张表中删除数据
 
-### 7.1 普通删除
+### 普通删除
 
 ``` sql
 DELETE FROM tb;
@@ -589,7 +589,7 @@ DELETE FROM tb;
 }
 ```
 
-### 7.2 含有WHERE的删除
+### 含有WHERE的删除
 
 ``` sql
 DELETE FROM tb WHERE c1 > 50000;
@@ -616,7 +616,7 @@ DELETE FROM tb WHERE c1 > 50000;
 
 ## 8. DROP语句
 
-### 8.1 DROP DATABASE
+### DROP DATABASE
 
 删除数据库
 
@@ -635,7 +635,7 @@ DROP DATABASE abc;
 }
 ```
 
-### 8.2 DROP TABLE
+### DROP TABLE
 
 删除一张表
 

@@ -3,6 +3,7 @@ from collections import defaultdict
 # micro SQL parser
 
 RESERVED = {
+        'use'       : 'USE',
         'create'    : 'CREATE',
         'drop'      : 'DROP',
         'delete'    : 'DELETE',
@@ -129,7 +130,7 @@ def t_error(t):
     t.lexer.skip(len(t.value))
 
 # build the lexer
-from ply import lex
+from sql.ply import lex
 lexer = lex.lex()
 
 # Parser
@@ -149,13 +150,28 @@ IDs = {}
 
 #============ rules ==================================
 
+
+# ************** USE statement *********************
+
+def p_statement_use(p):
+    'statement : useexpr SEMICOLON'
+    p[0] = p[1]
+
+def p_useexpr(p):
+    'useexpr : USE ID'
+    p[0] = {
+            'type': 'query',
+            'name': 'use',
+            'content': {
+                'database': p[2]
+                }
+            }
+
 # ************** SELECT statement ******************
 
 def p_statement_select(p):
     'statement : selectexpr SEMICOLON' 
     p[0] = p[1]
-    print(p[0])
-    
 
 
 # select expression
@@ -231,12 +247,18 @@ def p_table(p):
             }
 
 def p_table_expr(p):
-    'table : LPAR selectexpr RPAR AS ID'
-    p[0] = {
-            'type': 'table', 
-            'name': p[5], 
-            'source': p[2]
-            }
+    '''
+    table : LPAR selectexpr RPAR AS ID
+          | LPAR selectexpr RPAR ID
+    '''
+    if len(p) == 5:
+        p[0] = {'type': 'table', 
+                'name': p[4], 
+                'source': p[2]}
+    else:
+        p[0] = {'type': 'table', 
+                'name': p[5], 
+                'source': p[2]}
 
 
 ## generate expressions combination
@@ -282,10 +304,32 @@ def p_filter(p):
            | columnexpr GTE columnexpr
            | columnexpr EQ columnexpr
            | columnexpr NE columnexpr
+           | columnexpr IN wheretable
     '''
     p[0] = make_opexpr(opname(p[2]), p[1], p[3])
 
+def p_wheretable(p):
+    'wheretable : ID'
+    p[0] = {'type': 'table', 
+            'name': p[1]}
 
+def p_wheretable_expr(p):
+    '''
+    wheretable : LPAR selectexpr RPAR AS ID
+               | LPAR selectexpr RPAR ID
+               | LPAR selectexpr RPAR
+    '''
+    if len(p) == 4:
+        p[0] = {'type': 'table',
+                'source': p[2]}
+    elif len(p) == 5:
+        p[0] = {'type': 'table', 
+                'name': p[4], 
+                'source': p[2]}
+    else:
+        p[0] = {'type': 'table', 
+                'name': p[5], 
+                'source': p[2]}
 
 # column operation expression
 
@@ -321,7 +365,7 @@ def p_columnexpr_binop(p):
 def p_statement_create(p):
     'statement : createexpr SEMICOLON'
     p[0] = p[1]
-    print(p[0])
+    #print(p[0])
 
 def p_createexpr_database(p):
     'createexpr : CREATE DATABASE ID'
@@ -473,7 +517,7 @@ def p_datatype(p):
 def p_statement_insert(p):
     'statement : insertexpr SEMICOLON'
     p[0] = p[1]
-    print(p[0])
+    #print(p[0])
 
 # INSERT expressions
 
@@ -618,7 +662,7 @@ def p_colset(p):
 def p_statement_update(p):
     'statement : updateexpr SEMICOLON'
     p[0] = p[1]
-    print(p[0])
+    #print(p[0])
 
 
 def p_updateexpr_nowhere(p):
@@ -655,7 +699,7 @@ def p_updateexpr_where(p):
 def p_statement_delete(p):
     'statement : deleteexpr SEMICOLON'
     p[0] = p[1]
-    print(p[0])
+    #print(p[0])
 
 
 def p_deleteexpr_nowhere(p):
@@ -690,7 +734,7 @@ def p_deleteexpr_where(p):
 def p_statement_drop(p):
     'statement : dropexpr SEMICOLON'
     p[0] = p[1]
-    print(p[0])
+    #print(p[0])
 
 def p_dropexpr_database(p):
     '''
@@ -722,10 +766,10 @@ def p_dropexpr_table(p):
 # parsing error
 
 def p_error(p):
-    print('Syntax error at "{}" of type "{}"'.format(p.value, p.type))
+    print('Syntax error at "{}"'.format(p))
 
 
 # build the parser
-from ply import yacc
+from sql.ply import yacc
 parser = yacc.yacc()
 

@@ -4,4 +4,12 @@ INSERT INTO test1 (num, str, bool) VALUES (1, 'abc' ,TRUE), (-1, 'def', FALSE);
 
 INSERT INTO test1 (num, str, bool) VALUES (-1, 'def', FALSE);
 
-SELECT * FROM test1;
+SELECT * FROM test1 where num = 1;
+
+SELECT * FROM test1 where num = 4;
+
+UPDATE test1 SET num = num + 2;
+
+UPDATE test1 SET num = num + 2 where num = 3;
+
+DELETE FROM test1 WHERE num > 4;

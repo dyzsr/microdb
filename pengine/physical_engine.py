@@ -103,10 +103,10 @@ class PhysicalBlock:
             now_data = son.get_next()
             if op.eq(now_data, None):
                 break
-            new_data = now_data
+            new_data = copy.deepcopy(now_data)
             for trans in logical_tree['trans']:
-                new_data[trans['name']] = logical_tree['calc'].calc_data(now_data)
-            IoCacheManager.update_table_entry(logical_tree['table'])
+                new_data[logical_tree['table']][trans['column']] = trans['calc'].calc_data(now_data)
+            IoCacheManager.update_table_entry(logical_tree['table'],now_data ,new_data)
         return
 
     # todo: 创建数据库

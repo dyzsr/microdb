@@ -48,12 +48,18 @@ class ExpTreeNode:
 
     # 计算的过程
     def calc_data(self, data=None):
+        if glo.Debug == 1:
+            print('[Debug] [calc_data] [input:', self.type, self.lson, self.rson, data, ']')
         if re.search(r'value', self.type):
             return self.lson
-        if re.search(r'columns', self.type):
+        if re.search(r'column', self.type):
+            print('[Debug] [calc_data] [column', op.eq(self.lson, '*'),']')
             if op.eq(self.lson, '*'):
-                for (k, v) in data:
+                for (k, v) in data.items():
+                    print('[Debug] [calc_data] [get<key,value>:', k,v, ']')
                     if self.rson in v.keys():
+                        if glo.Debug == 1:
+                            print('[Debug] [calc_data] [output columns:', v[self.rson], ']')
                         return v[self.rson]
             return data[self.lson][self.rson]
         # 一元运算符,二元运算符

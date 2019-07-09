@@ -298,6 +298,7 @@ class PhysicalBlock(Result):
             glo.GlobalVar.databasePath = logical_tree['name']
             if glo.GlobalVar.Debug == 1:
                 glo.Log.write_log('[Debug] [physical] [use_operator] [', glo.GlobalVar.databasePath, ']')
+            IoCacheManager.quit_main()
             self.result = []
             self.result.append(str("[Success] [use_database: " + logical_tree['name'] + ']'))
         else:

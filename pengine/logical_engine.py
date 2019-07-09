@@ -50,7 +50,8 @@ class ExpTreeNode:
     # 计算的过程
     def calc_data(self, data=None):
         if glo.GlobalVar.Debug == 1:
-            glo.Log.write_log('[Debug] [calc_data] [input:', self.type, type(self.lson), glo.Log.ttstr(self.rson), glo.Log.ttstr(data), ']')
+            glo.Log.write_log('[Debug] [calc_data] [input:', self.type, glo.Log.ttstr(self.lson), glo.Log.ttstr(self.rson),
+                              glo.Log.ttstr(data), ']')
         if re.search(r'value', self.type):
             return self.lson
         if re.search(r'column', self.type):

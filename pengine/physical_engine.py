@@ -79,11 +79,12 @@ class PhysicalBlock(Result):
                 self.result = son.result
                 return self
             pre_data_set = copy.deepcopy(self.data)
+            self.data = []
             while True:
                 now_data = son.get_next()
                 if glo.GlobalVar.Debug == 1:
                     glo.Log.write_log('[Debug] [physical] [join_operator2] [', glo.Log.ttstr(now_data), ']',
-                          '[', pre_data_set, ']', '[', len(pre_data_set), ']')
+                           '[' , pre_data_set, ']', '[', len(pre_data_set), ']')
                 if op.eq(now_data, None):
                     break
                 if len(pre_data_set) == 0:
@@ -91,6 +92,8 @@ class PhysicalBlock(Result):
                 else:
                     for data in pre_data_set:
                         self.data.append(dict(data, **now_data))
+        if glo.GlobalVar.Debug == 1:
+            glo.Log.write_log('[Debug] [physical] [join_operator2] [output:',glo.Log.ttstr(self.data), ']')
         return self
 
     # todo flag

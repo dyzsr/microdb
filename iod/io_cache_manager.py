@@ -80,6 +80,9 @@ class IoCacheManager():
             result.flag = True
             result.result = []
             result.result.append(str('[Error] [ don\'t exist table]'))
+        if glo.GlobalVar.Debug == 1:
+            glo.Log.write_log('[Debug] [IoCacheManager] [enable_table] [',
+                              glo.Log.ttstr(result.flag), glo.Log.ttstr(result.result), ']')
         return result
 
     # ======================================================
@@ -95,6 +98,9 @@ class IoCacheManager():
     # 检查是否载入
     @classmethod
     def find_cache_block(cls, table_name):
+        if glo.GlobalVar.Debug == 1:
+            glo.Log.write_log('[Debug] [IoCacheManager] [find_cache_block] [',
+                              glo.Log.ttstr(cls.list_cache_block_name), ']')
         list_name = cls.list_cache_block_name
         index = 0
         for block_name in list_name:
@@ -166,15 +172,20 @@ class IoCacheManager():
     # 增条目
     @classmethod
     def insert_table_entry(cls, table_name, entry):
+        print("!!!\n")
         if glo.GlobalVar.Debug == 1:
             glo.Log.write_log('[Debug] [IoCacheManager] [insert_table_entry] [input:', table_name, '-', glo.Log.ttstr(entry), ']')
+        print("!!!\n")
         # 先判断现在是否使用数据库
         result = cls.enable_table(table_name)
+        print("!!!\n")
         if op.eq(result.flag, True):
             return result
+        print("!!!\n")
         cls.check_table_load(table_name)
         table_index = cls.find_cache_block(table_name)
         if glo.GlobalVar.Debug == 1:
+            print("!!!\n")
             glo.Log.write_log('[Debug] [IoCacheManager] [insert_table_entry] [table_index:', table_index, ']')
         # todo : 增加数据时的合法性校验放在哪个地方做check data
         #
@@ -193,11 +204,21 @@ class IoCacheManager():
     # 增条目时不指定column,则利用元信息list
     @classmethod
     def insert_table_entry_list(cls, table_name, entry_list):
+        if glo.GlobalVar.Debug == 1:
+            print("!!!\n")
+            glo.Log.write_log('[Debug] [IoCacheManager] [insert_table_entry_list] ['
+                              , table_name, glo.Log.ttstr(entry_list), ']')
         result = cls.enable_table(table_name)
         if op.eq(result.flag, True):
             return result
         cls.check_table_load(table_name)
         table_index = cls.find_cache_block(table_name)
+        if glo.GlobalVar.Debug == 1:
+            print("!!!\n")
+            glo.Log.write_log('[Debug] [IoCacheManager] [insert_table_entry_list] [Running'
+                              , len(IoCacheManager.list_cache_block[table_index].meta)
+                              , len(entry_list),table_index, ']')
+
         if op.eq(len(entry_list), len(IoCacheManager.list_cache_block[table_index].meta)):
             now_entry = dict()
             now_entry[table_name] = dict()
@@ -205,8 +226,12 @@ class IoCacheManager():
             for column in IoCacheManager.list_cache_block[table_index].meta:
                 now_entry[table_name][column['column']] = entry_list[index]
                 index += 1
+            glo.Log.write_log('[Debug] [IoCacheManager] [insert_table_entry_list] [entry'
+                              , glo.Log.ttstr(now_entry), ']')
             IoCacheManager.list_cache_block[table_index]\
                 .insert_table_entry(now_entry)
+            if int(glo.GlobalVar.save_right_now) == 1:
+                cls.store_right_now(table_index)
         else:
             result.flag = True
             result.result = []

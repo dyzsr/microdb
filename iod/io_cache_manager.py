@@ -15,13 +15,14 @@
 
 from iod.io_cache import *
 from iod.io_in_out import *
-
+from pengine.query_result import *
 import operator as op
 import os
 from glo.glovar import *
 
 
-class IoCacheManager:
+# todo show and load all
+class IoCacheManager():
     cache_block_Limit = 3000
     # 时间戳
     total_timestamp = 0
@@ -36,8 +37,51 @@ class IoCacheManager:
 
     # 实例化对象
     def __init__(self):
+        # Result.__init__(self)
         return
 
+    # ===========================================================================
+    # 合法性判断：
+    # [判断] 是否存在数据库
+    @classmethod
+    def is_exist_database(cls, database_name):
+        schemaPath = glo.GlobalVar.dirPath + '/' + database_name
+        if op.eq(os.path.exists(schemaPath), True):
+            return True
+        return False
+
+    # [判断] databasePath是否被赋值
+    @classmethod
+    def is_use_database(cls):
+        if op.eq(glo.GlobalVar.databasePath, ""):
+            return False
+        return True
+
+    # [判断] database.table是否存在
+    @classmethod
+    def is_exist_table(cls, table_name):
+        tablePath = glo.GlobalVar.dirPath + '/' + glo.GlobalVar.databasePath + '/' + table_name
+        if glo.GlobalVar.Debug == 1:
+            print('[GlobalVar.Debug] [IoCacheManager] [is_exist_table] [', os.path.exists(tablePath), ']')
+        if op.eq(os.path.exists(tablePath), True):
+            return True
+        return False
+
+    # [判断并返回result类] database.table是否存在
+    @classmethod
+    def enable_table(cls, table_name):
+        result = Result()
+        if op.eq(cls.is_use_database(), False):
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ don\'t use any database]'))
+        elif op.eq(cls.is_exist_table(table_name), False):
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ don\'t exist table]'))
+        return result
+
+    # ======================================================
     # 替换策略,待实现
     @classmethod
     def LRU(cls):
@@ -46,6 +90,7 @@ class IoCacheManager:
         cls.list_cache_block_name.append("")
         return len(cls.list_cache_block)-1
 
+    # ======================================================
     # 检查是否载入
     @classmethod
     def find_cache_block(cls, table_name):
@@ -104,6 +149,10 @@ class IoCacheManager:
     def insert_table_entry(cls, table_name, entry):
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [insert_table_entry] [input:', table_name, '-', entry, ']')
+        # 先判断现在是否使用数据库
+        result = cls.enable_table(table_name)
+        if op.eq(result.flag, True):
+            return result
         cls.check_table_load(table_name)
         table_index = cls.find_cache_block(table_name)
         if glo.GlobalVar.Debug == 1:
@@ -115,12 +164,19 @@ class IoCacheManager:
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [insert_table_entry] [value:',
                   IoCacheManager.list_cache_block[table_index].data, ']')
-        cls.store_right_now(table_index)
-        return
+        result.result = []
+        result.result.append(str('[Success] [insert_table_entry]'))
+        # 立即存
+        if int(glo.GlobalVar.save_right_now) == 1:
+            cls.store_right_now(table_index)
+        return result
 
     # 增条目时不指定column,则利用元信息list
     @classmethod
     def insert_table_entry_list(cls, table_name, entry_list):
+        result = cls.enable_table(table_name)
+        if op.eq(result.flag, True):
+            return result
         cls.check_table_load(table_name)
         table_index = cls.find_cache_block(table_name)
         if op.eq(len(entry_list), len(IoCacheManager.list_cache_block[table_index].meta)):
@@ -130,39 +186,55 @@ class IoCacheManager:
             for column in IoCacheManager.list_cache_block[table_index].meta:
                 now_entry[table_name][column['column']] = entry_list[index]
                 index += 1
-            IoCacheManager.list_cache_block[table_index] \
+            IoCacheManager.list_cache_block[table_index]\
                 .insert_table_entry(now_entry)
-
-        return
+        else:
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ the number of item.key is equal to the number of column'))
+        return result
 
     # 删
     @classmethod
     def delete_table_entry(cls, table_name, entry):
+        result = cls.enable_table(table_name)
+        if op.eq(result.flag, True):
+            return result
         cls.check_table_load(table_name)
         table_index = cls.find_cache_block(table_name)
-        IoCacheManager.list_cache_block[table_index] \
+        son = IoCacheManager.list_cache_block[table_index] \
             .delete_table_entry(entry)
-        return
+        if op.eq(son.flag, True):
+            return son
+        return result
 
     # 改
     @classmethod
     def update_table_entry(cls, table_name, oldentry, newentry):
+        result = cls.enable_table(table_name)
+        if op.eq(result.flag, True):
+            return result
         cls.check_table_load(table_name)
         table_index = cls.find_cache_block(table_name)
-        IoCacheManager.list_cache_block[table_index] \
+        result = IoCacheManager.list_cache_block[table_index] \
             .update_table_entry(oldentry, newentry)
-        return
+        if op.eq(result.flag, True):
+            return result
+        result.result = []
+        result.result.append(str('[Error] [update_table_entry]'))
+        return result
 
     # 输出整体表
     @classmethod
     def select_table_entry(cls, table_name):
-        if op.eq(glo.GlobalVar.databasePath, ""):
-            print('[Error] [ don\'t use database ]\n')
-            return CacheBlock()
+        result = cls.enable_table(table_name)
+        if op.eq(result.flag, True):
+            return result
         cls.check_table_load(table_name)
         table_index = cls.find_cache_block(table_name)
-        return IoCacheManager.list_cache_block[table_index] \
+        result.result = IoCacheManager.list_cache_block[table_index] \
             .all_table_read()
+        return result
 
     # 创表
     @classmethod
@@ -170,79 +242,97 @@ class IoCacheManager:
         # if op.eq(databasePath,""):
         #     print("[Error] [Don't use a database or database don't exist]")
         #     return
-
+        result = Result()
+        if op.eq(cls.is_use_database(), False):
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ don\'t use any database]'))
+            print('[GlobalVar.Debug] [IoCacheManager] [create_table] [', result.flag, result.result, ']')
+            return result
+        elif op.eq(cls.is_exist_table(table_name), True):
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ there is a table with the same name]'))
+            return result
         tablePath = glo.GlobalVar.dirPath+'/' + glo.GlobalVar.databasePath + '/' + table_name
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [create_table] [input:', tablePath, table_name, ']')
         #  tablePath = Global.dirPath + '/' + table_name
-        if op.eq(os.path.exists(tablePath), False):
-            os.makedirs(tablePath)
-            cls.insert_table_in_databaselist(table_name)
-            fp = open(tablePath +'/'+'meta', "w")
-            for column in columns:
-                fp.write(json.dumps(column)+"\n")
-            fp.close()
-            fp = open(tablePath + '/' + 'data', "w")
-            fp.close()
-        else:
-            print("[Error] [Table_name is exited!]\n")
+        os.makedirs(tablePath)
+        cls.insert_table_in_databaselist(table_name)
+        fp = open(tablePath +'/'+'meta', "w")
+        for column in columns:
+            fp.write(json.dumps(column)+"\n")
+        fp.close()
+        fp = open(tablePath + '/' + 'data', "w")
+        fp.close()
         #   fp = open(Global.dirPath + '/' + table_name, "r")
         #    fp = open(Global.dirPath+'/'+table_name, "r")
-        return
+        return result
 
     # 创数据库
     # todo : 创建数据库的原信息存储含有的表list
     @classmethod
     def create_database(cls, database_name):
         schemaPath = glo.GlobalVar.dirPath + '/' + database_name
-        if op.eq(os.path.exists(schemaPath), False):
+        result = Result()
+        if op.eq(cls.is_exist_database(database_name), True):
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ there is a database with the same name]'))
+            return result
+        else:
             os.makedirs(schemaPath)
             fp = open(schemaPath + '/' + 'meta', "w")
             fp.close()
-        else:
-            print("[Error] [database is exited!]\n")
-        return
+        if glo.GlobalVar.Debug == 1:
+            print('[GlobalVar.Debug] [IoCacheManager] [create_table] [', result.flag, result.result, ']')
+        return result
 
     # 删表
     @classmethod
     def drop_table(cls, table_name):
+        result = cls.enable_table(table_name)
+        if op.eq(result.flag, True):
+            return result
         tablePath = glo.GlobalVar.dirPath + '/' + glo.GlobalVar.databasePath + '/' + table_name
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [delete_table] [', table_name, ']')
         #  tablePath = Global.dirPath + '/' + table_name
-        if op.eq(os.path.exists(tablePath), True):
-            StoreManager.remove_dir(tablePath)
-        else:
-            print("[Error] [Table_name isn't exited!]\n")
+        StoreManager.remove_dir(tablePath)
         #   fp = open(Global.dirPath + '/' + table_name, "r")
         #    fp = open(Global.dirPath+'/'+table_name, "r")
-        return
+        return result
 
     # 删数据库
     @classmethod
     def drop_database(cls, database_name):
         schemaPath = glo.GlobalVar.dirPath + '/' + database_name
-        # todo database 需要保留数据库元信息
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [delete_table] [', schemaPath, ']')
-        #  tablePath = Global.dirPath + '/' + table_name
-        # clear cache
-        list_cache_block = []
-        list_cache_block_name = []
-        if op.eq(os.path.exists(schemaPath), True):
+        result = Result()
+        if op.eq(cls.is_exist_database(database_name), True):
             StoreManager.remove_dir(schemaPath)
-            glo.GlobalVar.databasePath = ""
+            if op.eq(glo.GlobalVar.databasePath, database_name):
+                glo.GlobalVar.databasePath = ""
+                cls.list_cache_block = []
+                cls.list_cache_block_name = []
         else:
-            print("[Error] [Database isn't exited!]\n")
-        #   fp = open(Global.dirPath + '/' + table_name, "r")
-        #    fp = open(Global.dirPath+'/'+table_name, "r")
-        return
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ Database isn\'t exited!]'))
+        if glo.GlobalVar.Debug == 1:
+            print('[GlobalVar.Debug] [IoCacheManager] [create_table] [', result.flag, result.result, ']')
+        return result
 
-    # 删表：在list中增加表名
+    # 在数据库原信息中删表：在list中增加表名
     @classmethod
     def delete_table_in_databaselist(cls, table_name):
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [delete_table_in_databaselist] [', table_name, ']')
+        result = cls.enable_table(table_name)
+        if op.eq(result.flag, True):
+            return result
         schemaPath = glo.GlobalVar.dirPath + '/' + glo.GlobalVar.databasePath
         fp = open(schemaPath+ '/' + 'meta' , "r")
         list_table = []
@@ -258,11 +348,12 @@ class IoCacheManager:
             fp.write(json.dumps(line)+'\n')
         fp.close()
 
-    # 增表：在list中增加表名
+    # 在数据库原信息中增表：在list中增加表名
     @classmethod
     def insert_table_in_databaselist(cls, table_name):
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [insert_table_in_databaselist] [', glo.GlobalVar.dirPath, glo.GlobalVar.databasePath, table_name, ']')
+
         schemaPath = glo.GlobalVar.dirPath + '/' + glo.GlobalVar.databasePath
         fp = open(schemaPath + '/' + 'meta' , "r")
         list_table = []
@@ -275,5 +366,48 @@ class IoCacheManager:
             fp.write(json.dumps(line)+'\n')
         fp.close()
 
+    # 输出数据库元信息
+    @classmethod
+    def show_database(cls, database_name):
+        schemaPath = glo.GlobalVar.dirPath + '/' + database_name
+        # todo database 需要保留数据库元信息
+        if glo.GlobalVar.Debug == 1:
+            print('[GlobalVar.Debug] [IoCacheManager] [show_database] [', schemaPath, ']')
+        result = Result()
+        if op.eq(cls.is_exist_database(database_name), True):
+            fp = open(schemaPath + '/' + 'meta', "r")
+            result.result = []
+            for line in fp.readlines():
+                result.result.append(json.loads(line))
+            fp.close()
+        else:
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ Database isn\'t exited!]'))
+        if glo.GlobalVar.Debug == 1:
+            print('[GlobalVar.Debug] [IoCacheManager] [show_database] [', result.flag, result.result, ']')
+        return result
+
+    # 输出表元信息
+    @classmethod
+    def show_table(cls, table_name):
+        result = cls.enable_table(table_name)
+        if op.eq(result.flag, True):
+            return result
+        tablePath = glo.GlobalVar.dirPath + '/' + glo.GlobalVar.databasePath + '/' + table_name
+        fp = open(tablePath + '/' + 'meta', "r")
+        result.result = []
+        for line in fp.readlines():
+            print('[Debug] [IoCacheManager] [show_database] [Running', line, ']')
+            result.result.append(json.loads(line))
+        fp.close()
+        if glo.GlobalVar.Debug == 1:
+            print('[Debug] [IoCacheManager] [show_database] [output', result.flag, result.result, ']')
+        return result
+
+    @classmethod
+    def quit_main(cls):
+        for index in range(len(cls.list_cache_block_name)):
+            cls.store_right_now(index)
 
 

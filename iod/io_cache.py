@@ -8,6 +8,7 @@
 
 import operator as op
 import glo.glovar as glo
+from pengine.query_result import *
 
 
 class CacheBlock:
@@ -15,6 +16,11 @@ class CacheBlock:
     def __init__(self):
         self.data = []
         self.meta = dict()
+
+    def is_exist_entry(self, entry):
+        if entry in self.data:
+            return True
+        return False
 
     # 增
     def insert_table_entry(self, entry):
@@ -25,19 +31,31 @@ class CacheBlock:
 
     # 删
     def delete_table_entry(self, entry):
-        self.data.remove(entry)
-        return
+        result = Result()
+        if op.eq(self.is_exist_entry(entry), True):
+            self.data.remove(entry)
+        else:
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ don\'t exist item in table'))
+        return result
 
     # 改
     def update_table_entry(self, oldentry, newentry):
-        index = 0
-        for words in self.data:
-            if op.eq(words, oldentry):
-                self.data[index] = newentry
-                break
-            else:
-                index += 1
-        return
+        result = Result()
+        if op.eq(self.is_exist_entry(oldentry), True):
+            index = 0
+            for words in self.data:
+                if op.eq(words, oldentry):
+                    self.data[index] = newentry
+                    break
+                else:
+                    index += 1
+        else:
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ don\'t exist item in table'))
+        return result
 
     # all_read
     def all_table_read(self):
@@ -54,8 +72,8 @@ class CacheBlock:
         for data_object in list_object:
             self.data.append(data_object)
 
-    def get_metadata(self, object):
-        self.meta = object
+    def get_metadata(self, obj):
+        self.meta = obj
         return
 
 

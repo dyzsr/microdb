@@ -14,11 +14,13 @@ import operator as op
 from iod.io_cache_manager import *
 import copy
 import glo.glovar as glo
+from pengine.query_result import *
 
 
-class PhysicalBlock:
+class PhysicalBlock(Result):
 
     def __init__(self):
+        Result.__init__(self)
         self.data = []
         self.index = 0
 
@@ -29,16 +31,27 @@ class PhysicalBlock:
         self.index += 1
         return data
 
+    # todo flag
     def table_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [table_operator] [input:', logical_tree, ']')
-        self.data = IoCacheManager.select_table_entry(logical_tree['name'])
+        son = IoCacheManager.select_table_entry(logical_tree['name'])
+        if op.eq(son.flag, True):
+            self.flag = son.flag
+            self.result = son.result
+            return self
+        self.data = son.result
         return self
 
+    # todo flag
     def map_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [map_operator] [input:', logical_tree, ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
+        if op.eq(son.flag, True):
+            self.flag = son.flag
+            self.result = son.result
+            return self
         while True:
             now_data = son.get_next()
             if op.eq(now_data, None):
@@ -52,11 +65,16 @@ class PhysicalBlock:
                 self.data.append(more_data)
         return self
 
+    # todo flag
     def join_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [join_operator] [input:', logical_tree, ']')
         for son_node in logical_tree['son']:
             son = self.dfs_plan_tree(son_node)
+            if op.eq(son.flag, True):
+                self.flag = son.flag
+                self.result = son.result
+                return self
             pre_data_set = copy.deepcopy(self.data)
             while True:
                 now_data = son.get_next()
@@ -72,33 +90,53 @@ class PhysicalBlock:
                         self.data.append(dict(data, **now_data))
         return self
 
+    # todo flag
     def limit_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [limit_operator] [input:', logical_tree, ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
+        if op.eq(son.flag, True):
+            self.flag = son.flag
+            self.result = son.result
+            return self
         while True:
             now_data = son.get_next()
             if op.eq(now_data, None):
                 break
-            if op.eq(logical_tree['check'].check_data_main(now_data),True):
+            if op.eq(logical_tree['check'].check_data_main(now_data), True):
                 self.data.append(now_data)
         return self
 
     def delete_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [delete_operator] [input:', logical_tree, ']')
+        # 子树是否有问题
         son = self.dfs_plan_tree(logical_tree['son'][0])
+        if op.eq(son.flag, True):
+            self.flag = son.flag
+            self.result = son.result
+            return self
         while True:
             now_data = son.get_next()
             if op.eq(now_data, None):
                 break
-            IoCacheManager.delete_table_entry(logical_tree['table'], now_data)
-        return
+            son_result = IoCacheManager.delete_table_entry(logical_tree['table'], now_data)
+            # 是否删除成功
+            if op.eq(son_result.flag, True):
+                if op.eq(self.flag, False):
+                    self.flag = True
+                    self.result = []
+                self.result.append(son_result.result)
+        return self
 
     def update_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [update_operator] [input:', logical_tree, ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
+        if op.eq(son.flag, True):
+            self.flag = son.flag
+            self.result = son.result
+            return self
         while True:
             now_data = son.get_next()
             if op.eq(now_data, None):
@@ -106,20 +144,31 @@ class PhysicalBlock:
             new_data = copy.deepcopy(now_data)
             for trans in logical_tree['trans']:
                 new_data[logical_tree['table']][trans['column']] = trans['calc'].calc_data(now_data)
-            IoCacheManager.update_table_entry(logical_tree['table'], now_data , new_data)
-        return
+            son_result = IoCacheManager.update_table_entry(logical_tree['table'], now_data , new_data)
+            if op.eq(son_result.flag, True):
+                if op.eq(self.flag, False):
+                    self.flag = True
+                    self.result = []
+                self.result.append(son_result.result)
+        return self
 
     # todo: 创建数据库
     # todo
     def create_database_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [create_database_operator] [input:', logical_tree, ']')
-        IoCacheManager.create_database(logical_tree['name'])
-        return
+        son = IoCacheManager.create_database(logical_tree['name'])
+        if op.eq(son.flag, True):
+            self.flag = son.flag
+            self.result = son.result
+        else:
+            self.result = []
+            self.result.append(str("[Success] [create database : " + logical_tree['name'] + "]"))
+        print('[Debug] [physical] [create_database_operator] [output:', self.flag, self.result, ']')
+        return self
 
     # 创建表
-    @staticmethod
-    def create_table_operator(logical_tree):
+    def create_table_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [create_table_operator] [input:', logical_tree, ']')
 
@@ -152,9 +201,18 @@ class PhysicalBlock:
             if column['name'] in list_null:
                 now_column['null'] = False
             list_column.append(now_column)
-        IoCacheManager.create_table(logical_tree['table'], list_column)
-        return
+        son = IoCacheManager.create_table(logical_tree['table'], list_column)
+        if glo.GlobalVar.Debug == 1:
+            print('[Debug] [physical] [create_table_operator] [son_result:', son.flag, son.result, ']')
+        if op.eq(son.flag, True):
+            self.result = son.result
+            self.flag = son.flag
+        else:
+            self.result = list()
+            self.result.append(str("[Success] [create table : " + logical_tree['table'] + "]"))
+        return self
 
+    # 增 , todo 记录错误
     def insert_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [insert_operator] [input:', logical_tree, ']')
@@ -169,33 +227,68 @@ class PhysicalBlock:
                     index += 1
                 add_data = dict()
                 add_data[logical_tree['table']] = more_data
-                IoCacheManager.insert_table_entry(logical_tree['table'], add_data)
+                son = IoCacheManager.insert_table_entry(logical_tree['table'], add_data)
+                if op.eq(son.flag, True):
+                    if op.eq(self.flag, False):
+                        self.flag = True
+                        self.result = []
+                    self.result.append(son.result)
         else:
             for now_data in logical_tree['values']:
                 more_data = []
                 for values in now_data:
                     more_data.append(values.calc_data())
-                IoCacheManager.insert_table_entry_list(logical_tree['table'], more_data)
+                son = IoCacheManager.insert_table_entry_list(logical_tree['table'], more_data)
+                if op.eq(son.flag, True):
+                    if op.eq(self.flag, False):
+                        self.flag = True
+                        self.result = []
+                    self.result.append(son.result)
+        if op.eq(self.flag, False):
+            self.result = []
+            self.result.append(str("[Success] [insert]"))
         return
 
-    @staticmethod
-    def drop_table_operator(logical_tree):
+    def drop_table_operator(self, logical_tree):
         for table in logical_tree['name']:
+            son = IoCacheManager.enable_table(table)
+            if op.eq(son.flag, True):
+                if op.eq(self.flag, False):
+                    self.flag = True
+                    self.result = []
+                self.result.append(son.result)
+                continue
             IoCacheManager.delete_table_in_databaselist(table)
             IoCacheManager.save_table_and_remove(table)
             IoCacheManager.drop_table(table)
-        return
+            if op.eq(son.flag, True):
+                if op.eq(self.flag, False):
+                    self.flag = True
+                    self.result = []
+                self.result.append(son.result)
+                continue
+        return self
 
-    @staticmethod
-    def drop_database_operator(logical_tree):
-        IoCacheManager.drop_database(logical_tree['name'])
-        return
+    def drop_database_operator(self, logical_tree):
+        son = IoCacheManager.drop_database(logical_tree['name'])
+        if op.eq(son.flag, True):
+            return son
+        self.result = []
+        self.result.append(str("[Success] [drop_database: " + logical_tree['name'] + ']'))
+        return self
 
-    @staticmethod
-    def use_operator(logical_tree):
-        glo.GlobalVar.databasePath = logical_tree['name']
-        if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [use_operator] [', glo.GlobalVar.databasePath , ']')
+    def use_operator(self, logical_tree):
+        if op.eq(IoCacheManager.is_exist_database(logical_tree['name']), True):
+            glo.GlobalVar.databasePath = logical_tree['name']
+            if glo.GlobalVar.Debug == 1:
+                print('[Debug] [physical] [use_operator] [', glo.GlobalVar.databasePath, ']')
+            self.result = []
+            self.result.append(str("[Success] [use_database: " + logical_tree['name'] + ']'))
+        else:
+            self.flag = True
+            self.result = []
+            self.result.append(str("[Error] [don't exist database:" + logical_tree['name'] + ']'))
+        return self
 
     @classmethod
     def dfs_plan_tree(cls, logical_tree):

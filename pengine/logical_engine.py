@@ -102,7 +102,7 @@ class ExpTreeNode:
             return -self.lson.calc_data(data)
 
     def check_data_main(self, data):
-        return self.calc_data(data) != 0
+        return self.calc_data(data) != False
 
     #
     def debug_calc_tree(self):

@@ -1,4 +1,4 @@
-CREATE DATABASE db3;
+CREATE DATABASE db;
 
 USE db;
 
@@ -9,6 +9,8 @@ INSERT INTO test1 (num, str, bool) VALUES (1, 'abc' ,TRUE), (-1, 'def', FALSE);
 DROP TABLE test1;
 
 INSERT INTO test1 (num, str, bool) VALUES (-1, 'def', FALSE);
+
+INSERT INTO test1 VALUES (-1, 'fgh', FALSE);
 
 SELECT * FROM test1 where num = 1;
 
@@ -21,3 +23,5 @@ UPDATE test1 SET num = num + 2 where num = 3;
 DELETE FROM test1 WHERE num > 4;
 
 DROP DATABASE db;
+
+DROP TABLE test1;

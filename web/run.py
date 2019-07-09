@@ -43,25 +43,53 @@ class MainHandler(tornado.web.RequestHandler):
        #     print(parsingTrees)
             pass
 
+        def get_name(data):
+            if not data:
+                return 'none'
+            if isinstance(data[0], str):
+                return 'show'
+            return data[0].items()[0][0]
+
+        def get_meta(data):
+            if not data:
+                return []
+            if isinstance(data[0], str):
+                return ['tables']
+            return list(map(lambda *x: x[0], data[0].items()[0][1]))
+
+        def get_values(data):
+            if not data:
+                return []
+            if isinstance(data[0], str):
+                return list(map(lambda x: [x], data[:]))
+            values = [ list(map(lambda *y: y[1], x.items()[0][1])) for x in data ]
+            return values
+
         # Do queries
         for tree in parsingTrees:
             print('Parsing tree:')
             print(json.dumps(tree, indent=2), end='\n\n')
 
-            '''
             logres = LogicalEngine.run_logical_main(tree)
             phyres = PhysicalBlock.dfs_plan_tree(logres)
-            print('Result:')
-            print(phyres, end='\n\n')
+
+            #print(json.dumps(phyres.data, indent=2))
 
             res = {}
             if phyres.flag == True:
                 res['type'] = 'error'
-            elif isinstance(phyres.result, str):
-                res['type'] = 'info'
+                res['info'] = phyres.result
             else:
-                res['type'] = 'values'
-            '''
+                if len(phyres.result) > 0:
+                    res['type'] = 'info'
+                    res['info'] = phyres.result
+                else:
+                    res['type'] = 'table'
+                    print(json.dumps(get_name(phyres.data), indent=2))
+                    print(json.dumps(get_meta(phyres.data), indent=2))
+                    print(json.dumps(get_values(phyres.data), indent=2))
+
+            print(json.dumps(res, indent=2))
 
         # Write back result
         result = {

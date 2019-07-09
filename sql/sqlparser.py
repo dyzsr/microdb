@@ -19,6 +19,8 @@ RESERVED = {
 
         'database'  : 'DATABASE',
         'table'     : 'TABLE',
+        'databases' : 'DATABASES',
+        'tables'    : 'TABLES',
         'columns'   : 'COLUMNS',
 
         'boolean'   : 'BOOLTYPE',
@@ -191,7 +193,7 @@ def p_statement_show(p):
 
 def p_showexpr_database(p):
     '''
-    showexpr : SHOW DATABASE
+    showexpr : SHOW DATABASES
     '''
     p[0] = {
             'type': 'query',
@@ -203,7 +205,7 @@ def p_showexpr_database(p):
 
 def p_showexpr_table(p):
     '''
-    showexpr : SHOW TABLE
+    showexpr : SHOW TABLES
     '''
     p[0] = {
             'type': 'query',

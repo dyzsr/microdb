@@ -236,6 +236,38 @@ class IoCacheManager():
             .all_table_read()
         return result
 
+    # add name in list
+    @classmethod
+    def add_name_in_list(cls, filePath, entry):
+        if op.eq(os.path.exists(filePath), False):
+            fp = open(filePath, "w")
+            fp.close()
+        fp = open(filePath, "r")
+        list_table = []
+        for line in fp.readlines():
+            list_table.append(json.loads(line))
+        list_table.append(entry)
+        fp.close()
+        fp = open(filePath, "w")
+        for line in list_table:
+            fp.write(json.dumps(line) + '\n')
+        fp.close()
+        return
+    # del name in list
+    @classmethod
+    def remove_name_in_list(cls, filePath, enrty):
+        fp = open(filePath, "r")
+        list_table = []
+        for line in fp.readlines():
+            list_table.append(json.loads(line))
+        list_table.remove(enrty)
+        fp.close()
+        fp = open(filePath, "w")
+        for line in list_table:
+            fp.write(json.dumps(line) + '\n')
+        fp.close()
+        return
+
     # 创表
     @classmethod
     def create_table(cls, table_name, columns):
@@ -285,6 +317,7 @@ class IoCacheManager():
             os.makedirs(schemaPath)
             fp = open(schemaPath + '/' + 'meta', "w")
             fp.close()
+            cls.add_name_in_list(glo.GlobalVar.dirPath + '/meta', database_name)
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [create_table] [', result.flag, result.result, ']')
         return result
@@ -313,6 +346,7 @@ class IoCacheManager():
         result = Result()
         if op.eq(cls.is_exist_database(database_name), True):
             StoreManager.remove_dir(schemaPath)
+            cls.remove_name_in_list(glo.GlobalVar.dirPath + '/meta', database_name)
             if op.eq(glo.GlobalVar.databasePath, database_name):
                 glo.GlobalVar.databasePath = ""
                 cls.list_cache_block = []
@@ -334,63 +368,59 @@ class IoCacheManager():
         if op.eq(result.flag, True):
             return result
         schemaPath = glo.GlobalVar.dirPath + '/' + glo.GlobalVar.databasePath
-        fp = open(schemaPath+ '/' + 'meta' , "r")
-        list_table = []
-        for line in fp.readlines():
-            print('[GlobalVar.Debug] [IoCacheManager] [delete_table_in_databaselist2] [', line, ']')
-            list_table.append(json.loads(line))
-        if glo.GlobalVar.Debug == 1:
-            print('[GlobalVar.Debug] [IoCacheManager] [delete_table_in_databaselist2] [', list_table, ']')
-        list_table.remove(table_name)
-        fp.close()
-        fp = open(schemaPath+ '/' + 'meta' , "w")
-        for line in list_table:
-            fp.write(json.dumps(line)+'\n')
-        fp.close()
+        cls.remove_name_in_list(schemaPath + '/meta', table_name)
+        return
 
     # 在数据库原信息中增表：在list中增加表名
     @classmethod
     def insert_table_in_databaselist(cls, table_name):
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [insert_table_in_databaselist] [', glo.GlobalVar.dirPath, glo.GlobalVar.databasePath, table_name, ']')
-
         schemaPath = glo.GlobalVar.dirPath + '/' + glo.GlobalVar.databasePath
-        fp = open(schemaPath + '/' + 'meta' , "r")
-        list_table = []
-        for line in fp.readlines():
-            list_table.append(json.loads(line))
-        list_table.append(table_name)
-        fp.close()
-        fp = open(schemaPath+ '/' + 'meta' , "w")
-        for line in list_table:
-            fp.write(json.dumps(line)+'\n')
-        fp.close()
+        cls.add_name_in_list(schemaPath + '/meta', table_name)
+        return
 
     # 输出数据库元信息
     @classmethod
-    def show_database(cls, database_name):
-        schemaPath = glo.GlobalVar.dirPath + '/' + database_name
+    def show_database(cls):
+        result = Result()
         # todo database 需要保留数据库元信息
         if glo.GlobalVar.Debug == 1:
-            print('[GlobalVar.Debug] [IoCacheManager] [show_database] [', schemaPath, ']')
-        result = Result()
-        if op.eq(cls.is_exist_database(database_name), True):
-            fp = open(schemaPath + '/' + 'meta', "r")
-            result.result = []
-            for line in fp.readlines():
-                result.result.append(json.loads(line))
-            fp.close()
-        else:
-            result.flag = True
-            result.result = []
-            result.result.append(str('[Error] [ Database isn\'t exited!]'))
+            print('[GlobalVar.Debug] [IoCacheManager] [show_database] [', glo.GlobalVar.dirPath, ']')
+        fp = open(glo.GlobalVar.dirPath + '/' + 'meta', "r")
+        result.result = []
+        for line in fp.readlines():
+            result.result.append(json.loads(line))
+        fp.close()
         if glo.GlobalVar.Debug == 1:
             print('[GlobalVar.Debug] [IoCacheManager] [show_database] [', result.flag, result.result, ']')
         return result
 
-    # 输出表元信息
+    # 输出当前数据库下表列表
     @classmethod
-    def show_table(cls, table_name):
+    def show_table(cls):
+        result = Result()
+        if op.eq(cls.is_use_database(), False):
+            result.flag = True
+            result.result = []
+            result.result.append(str('[Error] [ don\'t use any database]'))
+            return result
+        schemaPath = glo.GlobalVar.dirPath + '/' + glo.GlobalVar.databasePath
+        # todo database 需要保留数据库元信息
+        if glo.GlobalVar.Debug == 1:
+            print('[GlobalVar.Debug] [IoCacheManager] [show_table] [', schemaPath, ']')
+        fp = open(schemaPath + '/' + 'meta', "r")
+        result.result = []
+        for line in fp.readlines():
+            result.result.append(json.loads(line))
+        fp.close()
+        if glo.GlobalVar.Debug == 1:
+            print('[GlobalVar.Debug] [IoCacheManager] [show_table] [', result.flag, result.result, ']')
+        return result
+
+    # 输出当前数据库的表的列
+    @classmethod
+    def show_columns(cls, table_name):
         result = cls.enable_table(table_name)
         if op.eq(result.flag, True):
             return result

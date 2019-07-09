@@ -272,9 +272,11 @@ class PhysicalBlock(Result):
     def drop_database_operator(self, logical_tree):
         son = IoCacheManager.drop_database(logical_tree['name'])
         if op.eq(son.flag, True):
-            return son
-        self.result = []
-        self.result.append(str("[Success] [drop_database: " + logical_tree['name'] + ']'))
+            self.result = son.result
+            self.flag = son.flag
+        else:
+            self.result = []
+            self.result.append(str("[Success] [drop_database: " + logical_tree['name'] + ']'))
         return self
 
     def use_operator(self, logical_tree):
@@ -288,6 +290,30 @@ class PhysicalBlock(Result):
             self.flag = True
             self.result = []
             self.result.append(str("[Error] [don't exist database:" + logical_tree['name'] + ']'))
+        return self
+
+    def show_database_operator(self, logical_tree):
+        son = IoCacheManager.show_database()
+        if op.eq(self.flag, False):
+            self.data = son.result
+        self.result = son.result
+        self.flag = son.flag
+        return self
+
+    def show_table_operator(self, logical_tree):
+        son = IoCacheManager.show_table()
+        if op.eq(self.flag, False):
+            self.data = son.result
+        self.result = son.result
+        self.flag = son.flag
+        return self
+
+    def show_columns_operator(self, logical_tree):
+        son = IoCacheManager.show_columns(logical_tree['name'])
+        if op.eq(self.flag, False):
+            self.data = son.result
+        self.result = son.result
+        self.flag = son.flag
         return self
 
     @classmethod
@@ -319,5 +345,11 @@ class PhysicalBlock(Result):
             now_block.drop_database_operator(logical_tree)
         elif op.eq(logical_tree['type'], 'use'):
             now_block.use_operator(logical_tree)
+        elif op.eq(logical_tree['type'], 'showt'):
+            now_block.show_table_operator(logical_tree)
+        elif op.eq(logical_tree['type'], 'showd'):
+            now_block.show_database_operator(logical_tree)
+        elif op.eq(logical_tree['type'], 'showc'):
+            now_block.show_columns_operator(logical_tree)
         return now_block
 

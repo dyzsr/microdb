@@ -25,7 +25,7 @@ if __name__ == '__main__':
             continue
         ans1 = parser.parse(s)
         print('[Info] [finish Ast]', ans1)
-        ans2 = LogicalEngine.run_logical_main(ans1)
+        ans2 = LogicalEngine.run_logical_main(ans1[0])
         print('[Info] [finish ast2log]', ans2)
-        ans3 = PhysicalBlock.dfs_plan_tree(LogicalEngine.run_logical_main(parser.parse(s)))
+        ans3 = PhysicalBlock.dfs_plan_tree(ans2)
         print('[Info] [finish log2phy]', ans3.flag, ans3.result, ans3.data)

@@ -364,7 +364,6 @@ class LogicalEngine:
             now_node['name'] = grammar_node['names']
         return now_node
 
-
     # use
     @staticmethod
     def use_transform(grammar_node):
@@ -373,9 +372,24 @@ class LogicalEngine:
         now_node['name'] = grammar_node['database']
         return now_node
 
+    # show
+    @staticmethod
+    def show_transform(grammar_node):
+        now_node = dict()
+        if op.eq(grammar_node['type'], 'table'):
+            now_node['type'] = 'showt'
+        elif op.eq(grammar_node['type'], 'database'):
+            now_node['type'] = 'showd'
+        else:
+            now_node['type'] = 'showc'
+            now_node['name'] = grammar_node['tablename']
+        return now_node
+
     # 处理all,但不具体，只是转发到具体的操作上
     @staticmethod
     def dfs_grammar_tree(grammar_node):
+        if glo.GlobalVar.Debug == 1:
+            print('[Debug] [dfs_grammar_tree] [input:', grammar_node , ']\n')
         if op.eq(grammar_node['type'], "query"):
          #   node.son.append(dfs)
             if op.eq(grammar_node['name'], "select"):
@@ -392,6 +406,8 @@ class LogicalEngine:
                 return LogicalEngine.drop_transform(grammar_node['content'])
             elif op.eq(grammar_node['name'], 'use'):
                 return LogicalEngine.use_transform(grammar_node['content'])
+            elif op.eq(grammar_node['name'], 'show'):
+                return LogicalEngine.show_transform(grammar_node['content'])
         print("[ERROR] [ Query ERROR ] !")
         return None
 

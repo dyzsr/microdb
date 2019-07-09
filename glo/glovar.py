@@ -1,4 +1,5 @@
-Debug = 1
 
-dirPath = "D:\\dbms\\store"
-databasePath = "base"
+class GlobalVar:
+    dirPath = "D:/dbms/store"
+    databasePath = ""
+    Debug = 1

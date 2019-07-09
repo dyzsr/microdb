@@ -26,7 +26,7 @@ class StoreManager:
 
     @staticmethod
     def write_table(list_object, table_name):
-        if Debug == 1:
+        if GlobalVar.Debug == 1:
             print('[Debug] [StoreManager] [write_table] [list_object:', list_object.data,
                   'table_name',  table_name, ']')
         list_string = []
@@ -36,10 +36,10 @@ class StoreManager:
 
     @staticmethod
     def store_table_file(list_string, table_name):
-        tablePath = dirPath + '\\' + databasePath + '\\' + table_name
-        table_file = open(tablePath + '\\' + 'data', "w")
+        tablePath = GlobalVar.dirPath + '/' + GlobalVar.databasePath + '/' + table_name
+        table_file = open(tablePath + '/' + 'data', "w")
         for line in list_string:
-            if Debug == 1:
+            if GlobalVar.Debug == 1:
                 print('[Debug] [StoreManager] [store_table_file] [line:', line, ']')
             table_file.write(line+"\n")
         table_file.close()
@@ -47,11 +47,11 @@ class StoreManager:
 
     @staticmethod
     def get_table_metadata(table_name):
-        tablePath = dirPath + '\\' + databasePath + '\\' + table_name
+        tablePath = GlobalVar.dirPath + '/' + GlobalVar.databasePath + '/' + table_name
         if op.eq(os.path.exists(tablePath), False):
             print("[Error] [Table is not accessible.]")
             return
-        list_string = open(tablePath + '\\' + 'meta', "r")
+        list_string = open(tablePath + '/' + 'meta', "r")
         list_meta = []
         for line in list_string.readlines():
             list_meta.append(json.loads(line))
@@ -59,7 +59,7 @@ class StoreManager:
 
     @staticmethod
     def read_table(table_name):
-        tablePath = dirPath + '\\' + databasePath + '\\' + table_name
+        tablePath = GlobalVar.dirPath + '/' + GlobalVar.databasePath + '/' + table_name
         if op.eq(os.path.exists(tablePath), False):
             print("[Error] [Table is not accessible.]")
             return
@@ -72,11 +72,23 @@ class StoreManager:
     @staticmethod
     def load_table_file(tablePath):
         list_string = []
-        now_table_file = open(tablePath+'\\'+'data', "r")
+        now_table_file = open(tablePath+'/'+'data', "r")
         for line in now_table_file.readlines():
             list_string.append(line)
         now_table_file.close()
         return list_string
+
+    @staticmethod
+    def remove_dir(dir):
+        dir = dir.replace('\\', '/')
+        if os.path.isdir(dir):
+            for p in os.listdir(dir):
+                StoreManager.remove_dir(os.path.join(dir,p))
+            if os.path.exists(dir):
+                os.rmdir(dir)
+        else:
+            if os.path.exists(dir):
+                os.remove(dir)
 
 
 

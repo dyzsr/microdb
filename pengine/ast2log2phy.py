@@ -14,5 +14,5 @@ if __name__ == '__main__':
         print('[Info] [finish Ast]', ans1)
         ans2 = LogicalEngine.run_logical_main(ans1)
         print('[Info] [finish ast2log]', ans2)
-        ans3 = PhysicalBlock.dfs_plan_tree(ans2)
+        ans3 = PhysicalBlock.dfs_plan_tree(LogicalEngine.run_logical_main(parser.parse(s)))
         print('[Info] [finish log2phy]', ans3.data)

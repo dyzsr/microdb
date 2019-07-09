@@ -30,13 +30,13 @@ class PhysicalBlock:
         return data
 
     def table_operator(self, logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [table_operator] [input:', logical_tree, ']')
         self.data = IoCacheManager.select_table_entry(logical_tree['name'])
         return self
 
     def map_operator(self, logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [map_operator] [input:', logical_tree, ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
         while True:
@@ -53,14 +53,14 @@ class PhysicalBlock:
         return self
 
     def join_operator(self, logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [join_operator] [input:', logical_tree, ']')
         for son_node in logical_tree['son']:
             son = self.dfs_plan_tree(son_node)
             pre_data_set = copy.deepcopy(self.data)
             while True:
                 now_data = son.get_next()
-                if glo.Debug == 1:
+                if glo.GlobalVar.Debug == 1:
                     print('[Debug] [physical] [join_operator2] [', now_data, ']',
                           '[', pre_data_set, ']', '[', len(pre_data_set), ']')
                 if op.eq(now_data, None):
@@ -73,7 +73,7 @@ class PhysicalBlock:
         return self
 
     def limit_operator(self, logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [limit_operator] [input:', logical_tree, ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
         while True:
@@ -85,7 +85,7 @@ class PhysicalBlock:
         return self
 
     def delete_operator(self, logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [delete_operator] [input:', logical_tree, ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
         while True:
@@ -96,7 +96,7 @@ class PhysicalBlock:
         return
 
     def update_operator(self, logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [update_operator] [input:', logical_tree, ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
         while True:
@@ -110,8 +110,9 @@ class PhysicalBlock:
         return
 
     # todo: 创建数据库
+    # todo
     def create_database_operator(self, logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [create_database_operator] [input:', logical_tree, ']')
         IoCacheManager.create_database(logical_tree['name'])
         return
@@ -119,8 +120,9 @@ class PhysicalBlock:
     # 创建表
     @staticmethod
     def create_table_operator(logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [create_table_operator] [input:', logical_tree, ']')
+
         list_column = []
         list_primary = []
         list_null = []
@@ -131,7 +133,7 @@ class PhysicalBlock:
             if 'not null' in logical_tree['constraints']:
                 for column in logical_tree['constraints']['not null']:
                     list_null.append(column)
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [create_table_operator] [list_primary:', list_primary, ']')
             print('[Debug] [physical] [create_table_operator] [list_null', list_null, ']')
 
@@ -154,11 +156,11 @@ class PhysicalBlock:
         return
 
     def insert_operator(self, logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [insert_operator] [input:', logical_tree, ']')
         if isinstance(logical_tree['columns'], tuple):
             for now_data in logical_tree['values']:
-                if glo.Debug == 1:
+                if glo.GlobalVar.Debug == 1:
                     print('[Debug] [physical] [insert_operator2] [', now_data, ']')
                 more_data = dict()
                 index = 0
@@ -176,9 +178,28 @@ class PhysicalBlock:
                 IoCacheManager.insert_table_entry_list(logical_tree['table'], more_data)
         return
 
+    @staticmethod
+    def drop_table_operator(logical_tree):
+        for table in logical_tree['name']:
+            IoCacheManager.delete_table_in_databaselist(table)
+            IoCacheManager.save_table_and_remove(table)
+            IoCacheManager.drop_table(table)
+        return
+
+    @staticmethod
+    def drop_database_operator(logical_tree):
+        IoCacheManager.drop_database(logical_tree['name'])
+        return
+
+    @staticmethod
+    def use_operator(logical_tree):
+        glo.GlobalVar.databasePath = logical_tree['name']
+        if glo.GlobalVar.Debug == 1:
+            print('[Debug] [physical] [use_operator] [', glo.GlobalVar.databasePath , ']')
+
     @classmethod
     def dfs_plan_tree(cls, logical_tree):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [physical] [dfs_plan_tree] [', logical_tree, ']')
         now_block = PhysicalBlock()
         if op.eq(logical_tree['type'], 'map'):
@@ -199,5 +220,11 @@ class PhysicalBlock:
             now_block.update_operator(logical_tree)
         elif op.eq(logical_tree['type'], 'del'):
             now_block.delete_operator(logical_tree)
+        elif op.eq(logical_tree['type'], 'delt'):
+            now_block.drop_table_operator(logical_tree)
+        elif op.eq(logical_tree['type'], 'deld'):
+            now_block.drop_database_operator(logical_tree)
+        elif op.eq(logical_tree['type'], 'use'):
+            now_block.use_operator(logical_tree)
         return now_block
 

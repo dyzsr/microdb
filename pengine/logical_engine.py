@@ -49,7 +49,7 @@ class ExpTreeNode:
 
     # 计算的过程
     def calc_data(self, data=None):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [calc_data] [input:', self.type, self.lson, self.rson, data, ']')
         if re.search(r'value', self.type):
             return self.lson
@@ -59,7 +59,7 @@ class ExpTreeNode:
                 for (k, v) in data.items():
                     print('[Debug] [calc_data] [get<key,value>:', k,v, ']')
                     if self.rson in v.keys():
-                        if glo.Debug == 1:
+                        if glo.GlobalVar.Debug == 1:
                             print('[Debug] [calc_data] [output columns:', v[self.rson], ']')
                         return v[self.rson]
             return data[self.lson][self.rson]
@@ -120,7 +120,7 @@ class ExpTreeNode:
     # 建树的过程
     @classmethod
     def make_calc_tree(cls, grammar_node):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [make_check_tree] [input:', grammar_node,']')
         now_node = ExpTreeNode()
         if isinstance(grammar_node, dict):
@@ -128,13 +128,13 @@ class ExpTreeNode:
                 oper = grammar_node['operator']
                 now_node.type = oper
                 if re.match(r'\+|-|\*|\|and|or|>|<|=|!=|<=|>=', oper):
-                    if glo.Debug == 1:
+                    if glo.GlobalVar.Debug == 1:
                         print('[Debug] [make_check_tree] [re1]:', oper, ']')
                     now_node.lson = cls.make_calc_tree(grammar_node['operands'][0])
                     now_node.rson = cls.make_calc_tree(grammar_node['operands'][1])
                     now_node.name = '(' + now_node.lson.name+')'+oper+'('+ now_node.rson.name + ')'
                 elif re.match(r'not|uminus', oper):
-                    if glo.Debug == 1:
+                    if glo.GlobalVar.Debug == 1:
                         print('[Debug] [make_check_tree] [re2]:', oper, ']')
                     now_node.lson = cls.make_calc_tree(grammar_node['operands'][0])
                     now_node.name = oper + '(' +now_node.lson.name + ')'
@@ -165,7 +165,7 @@ class LogicalEngine:
     # 直接对应一个表
     @staticmethod
     def table_transform(grammar_node):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [LogicalEngine] [table_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['type'] = 'table'
@@ -175,7 +175,7 @@ class LogicalEngine:
     # 处理select中的from
     @staticmethod
     def join_transform(grammar_node):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [LogicalEngine] [join_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['son'] = []
@@ -190,7 +190,7 @@ class LogicalEngine:
     # 处理select中的where
     @staticmethod
     def limit_transform(grammar_node=None):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [LogicalEngine] [limit_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['type'] = "limit"
@@ -206,7 +206,7 @@ class LogicalEngine:
     # updata column can be exp
     @staticmethod
     def map_transform(columns):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [map_transform] [input:', columns)
         now_node = dict()
         now_node['type'] = "map"
@@ -243,7 +243,7 @@ class LogicalEngine:
     # 对于create请求，做进一步的转发
     @staticmethod
     def create_transform(grammar_node):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [create_transform] [input:', grammar_node)
         if op.eq(grammar_node['type'], 'database'):
             return LogicalEngine.create_database_transform(grammar_node)
@@ -253,7 +253,7 @@ class LogicalEngine:
     # 实际处理放在物理执行计划阶段
     @staticmethod
     def create_table_transform(grammar_node):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [create_table_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['type'] = "ct"
@@ -264,7 +264,7 @@ class LogicalEngine:
 
     @staticmethod
     def create_database_transform(grammar_node):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [create_database_transform] [input:', grammar_node, ']')
         now_node = dict()
         now_node['type'] = "cd"
@@ -275,7 +275,7 @@ class LogicalEngine:
     # insert的嵌入表达式已完成
     @staticmethod
     def insert_transform(grammar_node):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [insert_transform] [input:', grammar_node)
         now_node = dict()
         now_node['type'] = 'iv'
@@ -308,7 +308,7 @@ class LogicalEngine:
     # set column = exp
     @staticmethod
     def update_transform(grammar_node):
-        if glo.Debug==1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [update_transform] [input:', grammar_node)
         now_node = dict()
         now_node['type'] = 'up'
@@ -333,7 +333,7 @@ class LogicalEngine:
     # 删除
     @staticmethod
     def delete_transform(grammar_node):
-        if glo.Debug == 1:
+        if glo.GlobalVar.Debug == 1:
             print('[Debug] [delete_transform] [input:', grammar_node)
         now_node = dict()
         now_node['type'] = 'del'
@@ -364,6 +364,15 @@ class LogicalEngine:
             now_node['name'] = grammar_node['names']
         return now_node
 
+
+    # use
+    @staticmethod
+    def use_transform(grammar_node):
+        now_node = dict()
+        now_node['type'] = 'use'
+        now_node['name'] = grammar_node['database']
+        return now_node
+
     # 处理all,但不具体，只是转发到具体的操作上
     @staticmethod
     def dfs_grammar_tree(grammar_node):
@@ -381,6 +390,8 @@ class LogicalEngine:
                 return LogicalEngine.delete_transform(grammar_node['content'])
             elif op.eq(grammar_node['name'], 'drop'):
                 return LogicalEngine.drop_transform(grammar_node['content'])
+            elif op.eq(grammar_node['name'], 'use'):
+                return LogicalEngine.use_transform(grammar_node['content'])
         print("[ERROR] [ Query ERROR ] !")
         return None
 

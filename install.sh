@@ -2,6 +2,4 @@
 
 pip3 install tornado --user
 
-cd ui
-npm install
-npm run build
+cd ui && yarn && yarn build

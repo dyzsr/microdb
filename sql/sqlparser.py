@@ -55,6 +55,7 @@ RESERVED = {
 # ============= tokens =====================================
 
 tokens = tuple(RESERVED.values()) + (
+        'COMMENT',
         'BOOL',
         'FLOAT',
         'INT',
@@ -76,6 +77,11 @@ tokens = tuple(RESERVED.values()) + (
         'MUL',
         'DIV',
         )
+
+
+def t_COMMENT(t):
+    r'/\*([^*]|\*+[^/])*\*+/'
+    pass
 
 
 t_SEMICOLON = r';'
@@ -168,6 +174,10 @@ def p_statements(p):
         p[0] = (p[1],)
     else:
         p[0] = (p[1],) + p[2]
+
+def p_statement_empty(p):
+    'statement : SEMICOLON'
+    p[0] = tuple()
 
 # ************** USE statement *********************
 

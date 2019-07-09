@@ -43,32 +43,42 @@ class MainHandler(tornado.web.RequestHandler):
        #     print(parsingTrees)
             pass
 
-        def get_name(data):
+        def get_name(tree, data):
             if not data:
                 return 'none'
-            if isinstance(data[0], str):
-                return 'show'
-            return data[0].items()[0][0]
+            if tree['type'] == 'query' and tree['name'] == 'show' and tree['content']['type'] == 'database':
+                return 'show databases'
+            if tree['type'] == 'query' and tree['name'] == 'show' and tree['content']['type'] == 'table':
+                return 'show tables'
+            if tree['type'] == 'query' and tree['name'] == 'show' and tree['content']['type'] == 'columns':
+                return 'show columns'
+            return list(data[0].keys())[0]
 
-        def get_meta(data):
+        def get_meta(tree, data):
             if not data:
                 return []
-            if isinstance(data[0], str):
+            if tree['type'] == 'query' and tree['name'] == 'show' and tree['content']['type'] == 'database':
+                return ['databases']
+            if tree['type'] == 'query' and tree['name'] == 'show' and tree['content']['type'] == 'table':
                 return ['tables']
-            return list(map(lambda *x: x[0], data[0].items()[0][1]))
+            return list(list(data[0].values())[0].keys())
 
-        def get_values(data):
+        def get_values(tree, data):
             if not data:
                 return []
-            if isinstance(data[0], str):
-                return list(map(lambda x: [x], data[:]))
-            values = [ list(map(lambda *y: y[1], x.items()[0][1])) for x in data ]
+            if tree['type'] == 'query' and tree['name'] == 'show' and tree['content']['type'] == 'database':
+                return list(map(lambda x:[x], data))
+            if tree['type'] == 'query' and tree['name'] == 'show' and tree['content']['type'] == 'table':
+                return list(map(lambda x:[x], data))
+            values = [ list(list(x.values())[0].values()) for x in data ]
             return values
 
         # Do queries
         for tree in parsingTrees:
             print('Parsing tree:')
             print(json.dumps(tree, indent=2), end='\n\n')
+            if not tree:
+                continue
 
             logres = LogicalEngine.run_logical_main(tree)
             phyres = PhysicalBlock.dfs_plan_tree(logres)
@@ -80,57 +90,22 @@ class MainHandler(tornado.web.RequestHandler):
                 res['type'] = 'error'
                 res['info'] = phyres.result
             else:
-                if len(phyres.data) == 0:
+                if len(phyres.result) > 0 and len(phyres.data) == 0:
                     res['type'] = 'info'
                     res['info'] = phyres.result
                 else:
                     res['type'] = 'table'
-                    print(json.dumps(get_name(phyres.data), indent=2))
-                    print(json.dumps(get_meta(phyres.data), indent=2))
-                    print(json.dumps(get_values(phyres.data), indent=2))
+                    print(json.dumps(get_name(tree, phyres.data), indent=2))
+                    print(json.dumps(get_meta(tree, phyres.data), indent=2))
+                    print(json.dumps(get_values(tree, phyres.data), indent=2))
+                    res['name'] = get_name(tree, phyres.data)
+                    res['meta'] = get_meta(tree, phyres.data)
+                    res['values'] = get_values(tree, phyres.data)
 
-            print(json.dumps(res, indent=2))
+            results.append(res)
+            print(json.dumps(res, indent=2), end='\n\n')
 
-        # Write back result
-        result = {
-                'results': [
-                    {
-                        'type': 'table',
-                        'name': 'tb',
-                        'meta': ('a', 'b', 'c'),
-                        'values': (
-                            (1, -2., 'c3'),
-                            (4, 5.5, 'c6'),
-                            )
-                        },
-                    {
-                        'type': 'error',
-                        'info': '$*@Y#&*#&**#()!*#',
-                        },
-                    {
-                        'type': 'info',
-                        'info': 'good',
-                        },
-                    {
-                        'type': 'table',
-                        'name': 'tb',
-                        'meta': ('a', 'b', 'c'),
-                        'values': (
-                            (1, -2., 'c3'),
-                            (4, 5.5, 'c6'),
-                            )
-                        },
-                    {
-                        'type': 'table',
-                        'name': 'tb',
-                        'meta': ('a', 'b', 'c'),
-                        'values': (
-                            (1, -2., 'c3'),
-                            (4, 5.5, 'c6'),
-                            )
-                        },
-                    ]
-                }
+        result = {'results': results}
         self.write(result)
 
     def options(self):

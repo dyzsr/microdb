@@ -66,7 +66,7 @@ const useStyles = makeStyles({
 		justifyContent: 'flex-start',
 		display: 'flex',
 		flexGrow: 1,
-		paddingTop: '5%',
+		paddingTop: '6%',
 		paddingBottom: '5%',
 		background: '#334455',
 	},
@@ -120,20 +120,20 @@ const useStyles = makeStyles({
 	},
 
 	h3: {
-		paddingTop: '20px',
-		marginBottom: '10px',
+		paddingTop: '10px',
+		//paddingBottom: '5px',
 	},
 
 	tablename: {
 		marginLeft: '10px',
 		marginRight: '20px',
-		color: '#335577',
+		color: '#5577bb',
 	},
 
 	info: {
 		marginLeft: '10px',
 		marginRight: '20px',
-		color: '#225599',
+		color: '#5577bb',
 	},
 
 	error: {
@@ -196,7 +196,9 @@ const InfoResult = ({info, id}) => {
 	
 	return (
 		<div className={classes.result} key={`res_${id}`}>
-			<h3>执行信息</h3>
+			<h3 className={classes.h3}>
+				执行信息
+			</h3>
 			<p className={classes.info}>{info}</p>
 		</div>
 	);
@@ -207,7 +209,9 @@ const ErrorResult = ({info, id}) => {
 	
 	return (
 		<div className={classes.result} key={`res_${id}`}>
-			<h3>错误信息</h3>
+			<h3 className={classes.h3}>
+				错误信息
+			</h3>
 			<p className={classes.error}>{info}</p>
 		</div>
 	);

@@ -9,6 +9,7 @@ from collections import defaultdict
 
 RESERVED = {
         'use'       : 'USE',
+        'show'      : 'SHOW',
         'create'    : 'CREATE',
         'drop'      : 'DROP',
         'delete'    : 'DELETE',
@@ -165,7 +166,6 @@ def p_statements(p):
     else:
         p[0] = (p[1],) + p[2]
 
-
 # ************** USE statement *********************
 
 def p_statement_use(p):
@@ -181,6 +181,37 @@ def p_useexpr(p):
                 'database': p[2]
                 }
             }
+
+# ************** SHOW statement ********************
+
+def p_statement_show(p):
+    'statement : showexpr SEMICOLON'
+    p[0] = p[1]
+
+def p_showexpr_database(p):
+    '''
+    showexpr : SHOW DATABASE
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'show',
+            'content': {
+                'type': 'database',
+                }
+            }
+
+def p_showexpr_table(p):
+    '''
+    showexpr : SHOW TABLE
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'show',
+            'content': {
+                'type': 'table',
+                }
+            }
+            
 
 # ************** SELECT statement ******************
 

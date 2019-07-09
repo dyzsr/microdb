@@ -13,9 +13,9 @@ from pengine.physical_engine import *
 import json
 import glo.glovar
 
-#print(glo.glovar.GlobalVar.dirPath)
-#glo.glovar.GlobalVar.dirPath = os.environ['HOME'] + '/workspace/db_store'
-#print('DB store path: ', glo.glovar.GlobalVar.dirPath)
+print(glo.glovar.GlobalVar.dirPath)
+glo.glovar.GlobalVar.dirPath = os.environ['HOME'] + '/workspace/db_store'
+print('DB store path: ', glo.glovar.GlobalVar.dirPath)
 
 
 class MainHandler(tornado.web.RequestHandler):

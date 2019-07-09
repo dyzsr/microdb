@@ -294,7 +294,7 @@ class PhysicalBlock(Result):
 
     def show_database_operator(self, logical_tree):
         son = IoCacheManager.show_database()
-        if op.eq(self.flag, False):
+        if op.eq(son.flag, False):
             self.data = son.result
         self.result = son.result
         self.flag = son.flag
@@ -302,7 +302,7 @@ class PhysicalBlock(Result):
 
     def show_table_operator(self, logical_tree):
         son = IoCacheManager.show_table()
-        if op.eq(self.flag, False):
+        if op.eq(son.flag, False):
             self.data = son.result
         self.result = son.result
         self.flag = son.flag
@@ -310,7 +310,7 @@ class PhysicalBlock(Result):
 
     def show_columns_operator(self, logical_tree):
         son = IoCacheManager.show_columns(logical_tree['name'])
-        if op.eq(self.flag, False):
+        if op.eq(son.flag, False):
             self.data = son.result
         self.result = son.result
         self.flag = son.flag

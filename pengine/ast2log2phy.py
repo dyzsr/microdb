@@ -17,11 +17,12 @@ if __name__ == '__main__':
         if re.match(r"show", s):
             s = input('\t> ')
             if re.match(r"d", s):
-                s = input('\t\t> ')
-                IoCacheManager.show_database(s)
+                IoCacheManager.show_database()
+            elif re.match(r"t", s):
+                IoCacheManager.show_table()
             else:
-                s = input('\t\t> ')
-                IoCacheManager.show_table(s)
+                s = input('\t\t>')
+                IoCacheManager.show_columns(s)
             continue
         ans1 = parser.parse(s)
         print('[Info] [finish Ast]', ans1)

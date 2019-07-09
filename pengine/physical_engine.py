@@ -130,6 +130,9 @@ class PhysicalBlock(Result):
                     self.flag = True
                     self.result = []
                 self.result.append(son_result.result)
+        if op.eq(self.flag, False):
+            self.result = list()
+            self.result.append(str("[Success] [delete_operator]"))
         return self
 
     def update_operator(self, logical_tree):
@@ -151,8 +154,10 @@ class PhysicalBlock(Result):
             if op.eq(son_result.flag, True):
                 if op.eq(self.flag, False):
                     self.flag = True
-                    self.result = []
                 self.result.append(son_result.result)
+        if op.eq(self.flag, False):
+            self.result = list()
+            self.result.append(str("[Success] [update_operator]"))
         return self
 
     # todo: 创建数据库
@@ -273,6 +278,9 @@ class PhysicalBlock(Result):
                     self.result = []
                 self.result.append(son.result)
                 continue
+        if op.eq(self.flag, False):
+            self.result = list()
+            self.result.append(str("[Success] [drop_table_operator]"))
         return self
 
     def drop_database_operator(self, logical_tree):

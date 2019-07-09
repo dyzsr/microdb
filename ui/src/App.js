@@ -28,6 +28,8 @@ import 'brace/mode/mysql';
 import 'brace/theme/github';
 
 
+const process = require('process');
+
 var fileDownload = require('js-file-download');
 
 var storage = window.localStorage;
@@ -318,7 +320,8 @@ const App = (props) => {
 				console.log(results);
 
 				storage.setItem('tables', JSON.stringify(results));
-			});
+			})
+			.catch(err => alert(err));
 		console.log(code);
 	};
 

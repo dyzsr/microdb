@@ -80,7 +80,7 @@ class MainHandler(tornado.web.RequestHandler):
                 res['type'] = 'error'
                 res['info'] = phyres.result
             else:
-                if len(phyres.result) > 0:
+                if len(phyres.data) == 0:
                     res['type'] = 'info'
                     res['info'] = phyres.result
                 else:

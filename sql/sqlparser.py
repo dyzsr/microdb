@@ -1,9 +1,15 @@
+import sys
+import os
+if __name__ == '__main__':
+    sys.path.insert(0, os.path.abspath('../'))
+
 from collections import defaultdict
 
 # micro SQL parser
 
 RESERVED = {
         'use'       : 'USE',
+        'show'      : 'SHOW',
         'create'    : 'CREATE',
         'drop'      : 'DROP',
         'delete'    : 'DELETE',
@@ -150,6 +156,15 @@ IDs = {}
 
 #============ rules ==================================
 
+def p_statements(p):
+    '''
+    statements : statement
+               | statement statements
+    '''
+    if len(p) == 2:
+        p[0] = (p[1],)
+    else:
+        p[0] = (p[1],) + p[2]
 
 # ************** USE statement *********************
 
@@ -166,6 +181,37 @@ def p_useexpr(p):
                 'database': p[2]
                 }
             }
+
+# ************** SHOW statement ********************
+
+def p_statement_show(p):
+    'statement : showexpr SEMICOLON'
+    p[0] = p[1]
+
+def p_showexpr_database(p):
+    '''
+    showexpr : SHOW DATABASE
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'show',
+            'content': {
+                'type': 'database',
+                }
+            }
+
+def p_showexpr_table(p):
+    '''
+    showexpr : SHOW TABLE
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'show',
+            'content': {
+                'type': 'table',
+                }
+            }
+            
 
 # ************** SELECT statement ******************
 
@@ -766,7 +812,8 @@ def p_dropexpr_table(p):
 # parsing error
 
 def p_error(p):
-    print('Syntax error at "{}"'.format(p))
+    #print('Syntax error at "{}"'.format(p))
+    raise Exception('Syntax error at "{}"'.format(p))
 
 
 # build the parser

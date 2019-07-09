@@ -7,7 +7,9 @@ import IconButton from '@material-ui/core/IconButton';
 //import Icon from '@material-ui/core/Icon';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
 import SaveIcon from '@material-ui/icons/Save';
+import SaveAltIcon from '@material-ui/icons/SaveAlt';
 import PlayCircleFilledIcon from '@material-ui/icons/PlayCircleFilled';
+import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 
 import Table from '@material-ui/core/Table';
 import TableHead from '@material-ui/core/TableHead';
@@ -25,6 +27,9 @@ import { makeStyles } from '@material-ui/styles';
 
 import 'brace/mode/mysql';
 import 'brace/theme/github';
+
+
+var storage = window.localStorage;
 
 
 const useStyles = makeStyles({
@@ -73,7 +78,7 @@ const useStyles = makeStyles({
 		marginTop: '2px',
 	},
 
-	result: {
+	resultpane: {
 		flex: 1,
 		//width: '50%',
 		borderWidth: '1px',
@@ -83,9 +88,11 @@ const useStyles = makeStyles({
 		marginTop: '2px',
 	},
 
-	table: {
+	result: {
 		borderBottomStyle: 'solid',
 		borderBottomWidth: '1px',
+		marginLeft: '10px',
+		marginRight: '10px',
 	},
 
 	blockTitle: {
@@ -93,63 +100,149 @@ const useStyles = makeStyles({
 	},
 });
 
-const TableResult = ({tables}) => {
+// Multiple table results may be presented
+
+const TableResult = ({name, meta, values, id}) => {
 	const classes = useStyles();
 
 	return (
-		<div> {
-			tables.map(({meta, values}, id1) => (
-				<div className={classes.table} key={'table_' + id1}>
-					<Table>
-						<TableHead>
-							<TableRow>
-									{
-										meta.map((cell, id2) => (
-											<TableCell key={'table_' + id1 + '_meta_' + id2}>
-													{cell}
-											</TableCell>
-										))
-									}
-							</TableRow>
-						</TableHead>
+		<div className={classes.result} key={`res_${id}`}>
+			<h3>{name}</h3>
 
-						<TableBody>
+			<Table>
+				<TableHead>
+					<TableRow>
+						{
+							meta.map((cell, id2) => (
+								<TableCell key={`res_${id}_meta_${id2}`}>
+									{cell}
+								</TableCell>
+							))
+						}
+					</TableRow>
+				</TableHead>
+
+				<TableBody>
+					{
+						values.map((row, id3) => (
+							<TableRow key={`res_${id}_row_${id3}`}>
 								{
-									values.map((row, id3) => (
-										<TableRow key={'table_' + id1 + '_row_' + id3}>
-												{
-													row.map((cell, id4) => (
-														<TableCell key={'table_'+id1+'_row_'+id3+'_col_'+id4}>
-																{cell}
-														</TableCell>
-													))
-												}
-										</TableRow>
+									row.map((cell, id4) => (
+										<TableCell key={`res_${id}_row_${id3}_col_${id4}`}>
+											{cell}
+										</TableCell>
 									))
 								}
-						</TableBody>
-					</Table>
-				</div>
-			))
-		} </div>
+							</TableRow>
+						))
+					}
+				</TableBody>
+			</Table>
+		</div>
+	);
+}
+
+const InfoResult = ({info, id}) => {
+	const classes = useStyles();
+	
+	return (
+		<div className={classes.result} key={`res_${id}`}>
+			<h3>信息</h3>
+			<p>{info}</p>
+		</div>
+	);
+}
+
+const ErrorResult = ({info, id}) => {
+	const classes = useStyles();
+	
+	return (
+		<div className={classes.result} key={`res_${id}`}>
+			<h3>错误</h3>
+			<p>{info}</p>
+		</div>
+	);
+}
+
+const ResultView = ({tables}) => {
+	//	const classes = useStyles();
+
+	return (
+		<div>
+			{
+				tables.map((result, id) => {
+					if (result.type === 'table') {
+						return (
+							<TableResult
+								name={result.name}
+								meta={result.meta}
+								values={result.values}
+								id={id}
+							/>
+						);
+					} else if (result.type === 'info') {
+						return <InfoResult info={result.info} id={id} />;
+					} else {
+						return <ErrorResult info={result.info} id={id} />;
+					}
+				})
+			}
+		</div>
 	);
 }
 
 const App = (props) => {
 	const classes = useStyles();
 
-	const [code, setCode] = useState('');
+	let init_code = storage.getItem('code');
+	if (init_code == null)
+		init_code = '';
+	// source code in SQL
+	const [code, setCode] = useState(init_code);
 
-	const [tables, setTables] = useState([]);
-
-	const openFile = useRef(null);
-	const onOpenFile = (event) => {
-		
+	const onChangeCode = (code) => {
+		storage.setItem('code', code);
+		setCode(code);
 	};
 
+	let init_tables = storage.getItem('tables');
+	if (init_tables == null)
+		init_tables = [];
+	else
+		init_tables = JSON.parse(init_tables);
+	// table results
+	const [tables, setTables] = useState(init_tables);
+
+	// load the code from files
+	const openFile = useRef(null);
+	const onOpenFile = (files) => {
+		console.log(files);
+		if (files.length > 0) {
+			const file = files[0];
+
+			var reader = new FileReader();
+			reader.onload = () => {
+				const data = reader.result;
+				console.log(data);
+				setCode(data);
+				storage.setItem('code', data);
+			};
+
+			reader.readAsText(file);
+		} else {
+			alert('Failed to load file');
+		}
+	};
+
+	// save the code into files
+	const saveFile = useRef(null);
 	const onSave = () => {
 	};
 
+	const onSaveAs = () => {
+	};
+
+	// run the code
 	const onPlay = () => {
 		fetch('http://localhost:30000', {
 			method: 'POST',
@@ -168,38 +261,70 @@ const App = (props) => {
 				const results = json['results'];
 				setTables(results);
 				console.log(results);
+
+				storage.setItem('tables', JSON.stringify(results));
 			});
 		console.log(code);
-	}
+	};
+
+	const onExit = () => {
+		fetch('http://localhost:30000/exit', {
+			method: 'GET',
+			mode: 'cors',
+			cache: 'no-cache',
+			credentials: 'same-origin',
+		})
+			.then(response => response.text())
+			.then(text => {
+				alert('exited.' + text);
+			})
+			.catch(error => alert(error));
+	};
 
 	return (
 		<div className={classes.root}>
 			<AppBar className={classes.appBar}>
 				<Toolbar className={classes.toolbar}>
 					<div className={classes.toolbarLeft}>
+							{/* Open file button */}
 						<IconButton onClick={() => openFile.current.click()}>
 							<FolderOpenIcon />
 							<input
 								type="file"
 								ref={openFile}
-								onChange={event => onOpenFile(event)} 
+								onChange={event => onOpenFile(event.target.files)} 
 								style={{display: 'none'}}
+								accept=".sql,.txt"
 							/>
 						</IconButton>
-						<IconButton>
+						
+							{/* Save file button */}
+						<IconButton onClick={() => onSave()}>
 							<SaveIcon />
+						</IconButton>
+
+							{/* Save As button */}
+						<IconButton onClick={() => onSaveAs()}>
+							<SaveAltIcon />
 						</IconButton>
 					</div>
 
 					<div className={classes.toolbarRight}>
+							{/* Run code button */}
 						<IconButton onClick={() => onPlay()}>
 							<PlayCircleFilledIcon />
+						</IconButton>
+
+							{/* Exit button */}
+						<IconButton onClick={() => onExit()}>
+							<ExitToAppIcon />
 						</IconButton>
 					</div>
 				</Toolbar>
 			</AppBar>
 
 			<main className={classes.content}>
+					{/* Editor Window */}
 				<div className={classes.editor}>
 					<h2 className={classes.blockTitle}>
 						编辑查询
@@ -209,21 +334,24 @@ const App = (props) => {
 								<AceEditor
 									mode="mysql"
 									theme="github"
-									onChange={(code) => setCode(code)}
+									onChange={(code) => onChangeCode(code)}
 									value={code}
-									width={width - 10}
-									height={500}
+									width={`${width - 10}px`}
+									//height={`500px`}
+									//width={`${width}px`}
+									//height={`{height}px`}
 								/>
 							)}
 					</ContainerDimensions>
 				</div>
 
-				<div className={classes.result}>
+					{/* Results Window */}
+				<div className={classes.resultpane}>
 					<h2 className={classes.blockTitle}>
 							查询结果
 					</h2>
 
-					<TableResult tables={tables} />
+					<ResultView tables={tables} />
 				</div>
 			</main>
 		</div>

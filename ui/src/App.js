@@ -178,7 +178,7 @@ const TableResult = ({name, meta, values, id}) => {
 								{
 									row.map((cell, id4) => (
 										<TableCell key={`res_${id}_row_${id3}_col_${id4}`}>
-											{cell}
+											{''+cell}
 										</TableCell>
 									))
 								}

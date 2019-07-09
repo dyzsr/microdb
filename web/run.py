@@ -10,6 +10,7 @@ if __name__ == '__main__':
 from sql.sqlparser import parser
 from pengine.logical_engine import *
 from pengine.physical_engine import *
+from iod.io_cache_manager import *
 import json
 import glo.glovar
 
@@ -36,6 +37,12 @@ class MainHandler(tornado.web.RequestHandler):
             err = None
         except Exception as err:
             print(err)
+
+            res = {
+                    'type': 'error',
+                    'info': str(err),
+                    }
+            results.append(res)
             parsingTrees = tuple()
             err = 'parsing error'
         finally:
@@ -95,12 +102,12 @@ class MainHandler(tornado.web.RequestHandler):
                     res['info'] = phyres.result
                 else:
                     res['type'] = 'table'
-                    print(json.dumps(get_name(tree, phyres.data), indent=2))
-                    print(json.dumps(get_meta(tree, phyres.data), indent=2))
-                    print(json.dumps(get_values(tree, phyres.data), indent=2))
                     res['name'] = get_name(tree, phyres.data)
+                    print(json.dumps(res['name'], indent=2))
                     res['meta'] = get_meta(tree, phyres.data)
+                    print(json.dumps(res['meta'], indent=2))
                     res['values'] = get_values(tree, phyres.data)
+                    print(json.dumps(res['values'], indent=2))
 
             results.append(res)
             print(json.dumps(res, indent=2), end='\n\n')
@@ -122,6 +129,9 @@ class ExitHandler(tornado.web.RequestHandler):
 
     def get(self):
         self.write('ok')
+        print('Saving data...')
+        IoCacheManager.quit_main()
+        print('Finished.')
         tornado.ioloop.IOLoop.current().stop()
 
     def options(self):
@@ -140,6 +150,7 @@ def main():
     app = make_app()
     app.listen(30000)
     tornado.ioloop.IOLoop.current().start()
+    print('Exit DB.')
 
 if __name__ == '__main__':
     main()

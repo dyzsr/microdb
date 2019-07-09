@@ -331,7 +331,7 @@ const App = (props) => {
 		})
 			.then(response => response.text())
 			.then(text => {
-				alert('exited.' + text);
+				alert('退出数据库');
 			})
 			.catch(error => alert(error));
 	};

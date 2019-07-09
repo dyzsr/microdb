@@ -145,6 +145,24 @@ class IoCacheManager():
             cls.load_right_now(table_name)
         return
 
+    # 增空条目
+    @classmethod
+    def insert_table_none_entry(cls, table_name):
+        if glo.GlobalVar.Debug == 1:
+            glo.Log.write_log('[Debug] [IoCacheManager] [insert_table_none_entry] [input:', table_name, ']')
+        # 先判断现在是否使用数据库
+        result = cls.enable_table(table_name)
+        if op.eq(result.flag, True):
+            return result
+        cls.check_table_load(table_name)
+        table_index = cls.find_cache_block(table_name)
+        if glo.GlobalVar.Debug == 1:
+            glo.Log.write_log('[Debug] [IoCacheManager] [insert_table_none_entry] [table_index:', table_index, ']')
+        more_data = dict()
+        for column in IoCacheManager.list_cache_block[table_index].meta:
+            more_data[column['column']] = None
+        return more_data
+
     # 增条目
     @classmethod
     def insert_table_entry(cls, table_name, entry):

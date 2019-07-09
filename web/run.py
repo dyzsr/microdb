@@ -82,7 +82,25 @@ class MainHandler(tornado.web.RequestHandler):
                     {
                         'type': 'info',
                         'info': 'good',
-                        }
+                        },
+                    {
+                        'type': 'table',
+                        'name': 'tb',
+                        'meta': ('a', 'b', 'c'),
+                        'values': (
+                            (1, -2., 'c3'),
+                            (4, 5.5, 'c6'),
+                            )
+                        },
+                    {
+                        'type': 'table',
+                        'name': 'tb',
+                        'meta': ('a', 'b', 'c'),
+                        'values': (
+                            (1, -2., 'c3'),
+                            (4, 5.5, 'c6'),
+                            )
+                        },
                     ]
                 }
         self.write(result)

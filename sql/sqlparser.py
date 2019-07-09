@@ -19,6 +19,7 @@ RESERVED = {
 
         'database'  : 'DATABASE',
         'table'     : 'TABLE',
+        'columns'   : 'COLUMNS',
 
         'boolean'   : 'BOOLTYPE',
         'int'       : 'INTTYPE',
@@ -211,6 +212,20 @@ def p_showexpr_table(p):
                 'type': 'table',
                 }
             }
+
+def p_showexpr_columns(p):
+    '''
+    showexpr : SHOW COLUMNS FROM ID
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'show',
+            'content': {
+                'type': 'columns',
+                'tablename': p[4]
+                }
+            }
+
             
 
 # ************** SELECT statement ******************

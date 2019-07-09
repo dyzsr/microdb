@@ -240,7 +240,7 @@ class IoCacheManager():
         if op.eq(result.flag, True):
             return result
         result.result = []
-        result.result.append(str('[Error] [update_table_entry]'))
+        result.result.append(str('[Error] [update_table_entry ]'))
         return result
 
     # 输出整体表

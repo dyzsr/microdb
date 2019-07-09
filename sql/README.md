@@ -84,9 +84,26 @@
 | 与 | `and` |
 | 或 | `or`  |
 | 非 | `not` |
+| 包含于 | `in` |
 
 
-## 3. SELECT语句
+## 3. USE语句
+
+``` sql
+USE db;
+```
+
+``` py
+{
+  "type": "query",
+  "name": "use",
+  "content": {
+    "database": "db"
+  }
+}
+```
+
+## 4. SELECT语句
 
 ``` sql
 SELECT ... 「 FROM ... 「 WHERE ... 」」;
@@ -273,7 +290,7 @@ FROM (SELECT * FROM a WHERE c1 + c2 > 1000) AS t;
 }
 ```
 
-## 4. CREATE语句
+## 5. CREATE语句
 
 ``` sql
 CREATE DATABASE <database-name>;
@@ -359,7 +376,7 @@ CREATE TABLE hehe (
 }
 ```
 
-## 5. INSERT语句
+## 6. INSERT语句
 
 ``` sql
 INSERT INTO <table-name> 
@@ -499,7 +516,7 @@ SET c1 = 1, c2 = c3 * (c5 + c6);
 }
 ```
 
-## 6. UPDATE语句
+## 7. UPDATE语句
 
 更新一张表中的数据
 
@@ -569,7 +586,7 @@ UPDATE tb SET c1 = -2.4 WHERE c2 = TRUE;
 }
 ```
 
-## 7. DELETE语句
+## 8. DELETE语句
 
 从一张表中删除数据
 
@@ -614,7 +631,7 @@ DELETE FROM tb WHERE c1 > 50000;
 ```
 
 
-## 8. DROP语句
+## 9. DROP语句
 
 ### DROP DATABASE
 

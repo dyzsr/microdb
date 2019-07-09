@@ -1,3 +1,8 @@
+import sys
+import os
+if __name__ == '__main__':
+    sys.path.insert(0, os.path.abspath('../'))
+
 from collections import defaultdict
 
 # micro SQL parser
@@ -149,6 +154,16 @@ precedence = (
 IDs = {}
 
 #============ rules ==================================
+
+def p_statements(p):
+    '''
+    statements : statement
+               | statement statements
+    '''
+    if len(p) == 2:
+        p[0] = (p[1],)
+    else:
+        p[0] = (p[1],) + p[2]
 
 
 # ************** USE statement *********************
@@ -766,7 +781,8 @@ def p_dropexpr_table(p):
 # parsing error
 
 def p_error(p):
-    print('Syntax error at "{}"'.format(p))
+    #print('Syntax error at "{}"'.format(p))
+    raise Exception('Syntax error at "{}"'.format(p))
 
 
 # build the parser

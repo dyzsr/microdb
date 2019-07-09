@@ -25,7 +25,7 @@ class CacheBlock:
     # 增
     def insert_table_entry(self, entry):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [CacheBlock] [insert_table_entry] [input:', entry, ']')
+            glo.Log.write_log('[Debug] [CacheBlock] [insert_table_entry] [input:', glo.Log.ttstr(entry), ']')
         self.data.append(entry)
         return
 
@@ -60,7 +60,7 @@ class CacheBlock:
     # all_read
     def all_table_read(self):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [CacheBlock] [all_table_read] [', self.data, ']')
+            glo.Log.write_log('[Debug] [CacheBlock] [all_table_read] [', glo.Log.ttstr(self.data), ']')
         return self.data
 
     # all_write

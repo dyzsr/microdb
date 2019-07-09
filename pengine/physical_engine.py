@@ -34,7 +34,7 @@ class PhysicalBlock(Result):
     # todo flag
     def table_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [table_operator] [input:', logical_tree, ']')
+            glo.Log.write_log('[Debug] [physical] [table_operator] [input:', glo.Log.ttstr(logical_tree), ']')
         son = IoCacheManager.select_table_entry(logical_tree['name'])
         if op.eq(son.flag, True):
             self.flag = son.flag
@@ -46,7 +46,7 @@ class PhysicalBlock(Result):
     # todo flag
     def map_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [map_operator] [input:', logical_tree, ']')
+            glo.Log.write_log('[Debug] [physical] [map_operator] [input:', glo.Log.ttstr(logical_tree), ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
         if op.eq(son.flag, True):
             self.flag = son.flag
@@ -68,7 +68,7 @@ class PhysicalBlock(Result):
     # todo flag
     def join_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [join_operator] [input:', logical_tree, ']')
+            glo.Log.write_log('[Debug] [physical] [join_operator] [input:', glo.Log.ttstr(logical_tree), ']')
         for son_node in logical_tree['son']:
             son = self.dfs_plan_tree(son_node)
             if op.eq(son.flag, True):
@@ -79,7 +79,7 @@ class PhysicalBlock(Result):
             while True:
                 now_data = son.get_next()
                 if glo.GlobalVar.Debug == 1:
-                    print('[Debug] [physical] [join_operator2] [', now_data, ']',
+                    glo.Log.write_log('[Debug] [physical] [join_operator2] [', glo.Log.ttstr(now_data), ']',
                           '[', pre_data_set, ']', '[', len(pre_data_set), ']')
                 if op.eq(now_data, None):
                     break
@@ -93,7 +93,7 @@ class PhysicalBlock(Result):
     # todo flag
     def limit_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [limit_operator] [input:', logical_tree, ']')
+            glo.Log.write_log('[Debug] [physical] [limit_operator] [input:', glo.Log.ttstr(logical_tree), ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
         if op.eq(son.flag, True):
             self.flag = son.flag
@@ -109,7 +109,7 @@ class PhysicalBlock(Result):
 
     def delete_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [delete_operator] [input:', logical_tree, ']')
+            glo.Log.write_log('[Debug] [physical] [delete_operator] [input:', glo.Log.ttstr(logical_tree), ']')
         # 子树是否有问题
         son = self.dfs_plan_tree(logical_tree['son'][0])
         if op.eq(son.flag, True):
@@ -131,7 +131,7 @@ class PhysicalBlock(Result):
 
     def update_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [update_operator] [input:', logical_tree, ']')
+            glo.Log.write_log('[Debug] [physical] [update_operator] [input:', glo.Log.ttstr(logical_tree), ']')
         son = self.dfs_plan_tree(logical_tree['son'][0])
         if op.eq(son.flag, True):
             self.flag = son.flag
@@ -144,7 +144,7 @@ class PhysicalBlock(Result):
             new_data = copy.deepcopy(now_data)
             for trans in logical_tree['trans']:
                 new_data[logical_tree['table']][trans['column']] = trans['calc'].calc_data(now_data)
-            son_result = IoCacheManager.update_table_entry(logical_tree['table'], now_data , new_data)
+            son_result = IoCacheManager.update_table_entry(logical_tree['table'], now_data, new_data)
             if op.eq(son_result.flag, True):
                 if op.eq(self.flag, False):
                     self.flag = True
@@ -156,7 +156,8 @@ class PhysicalBlock(Result):
     # todo
     def create_database_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [create_database_operator] [input:', logical_tree, ']')
+            # print("!!!!!!!! ", glo.Log.ttstr(logical_tree))
+            glo.Log.write_log('[Debug] [physical] [create_database_operator] [input:', glo.Log.ttstr(logical_tree), ']')
         son = IoCacheManager.create_database(logical_tree['name'])
         if op.eq(son.flag, True):
             self.flag = son.flag
@@ -164,13 +165,13 @@ class PhysicalBlock(Result):
         else:
             self.result = []
             self.result.append(str("[Success] [create database : " + logical_tree['name'] + "]"))
-        print('[Debug] [physical] [create_database_operator] [output:', self.flag, self.result, ']')
+        glo.Log.write_log('[Debug] [physical] [create_database_operator] [output:', self.flag, str(self.result), ']')
         return self
 
     # 创建表
     def create_table_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [create_table_operator] [input:', logical_tree, ']')
+            glo.Log.write_log('[Debug] [physical] [create_table_operator] [input:', str(logical_tree), ']')
 
         list_column = []
         list_primary = []
@@ -183,8 +184,9 @@ class PhysicalBlock(Result):
                 for column in logical_tree['constraints']['not null']:
                     list_null.append(column)
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [create_table_operator] [list_primary:', list_primary, ']')
-            print('[Debug] [physical] [create_table_operator] [list_null', list_null, ']')
+            glo.Log.write_log('[Debug] [physical] [create_table_operator] [list_primary:',
+                              glo.Log.ttstr(list_primary), ']')
+            glo.Log.write_log('[Debug] [physical] [create_table_operator] [list_null', glo.Log.ttstr(list_null), ']')
 
         for column in logical_tree['columns']:
             now_column = dict()
@@ -203,7 +205,8 @@ class PhysicalBlock(Result):
             list_column.append(now_column)
         son = IoCacheManager.create_table(logical_tree['table'], list_column)
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [create_table_operator] [son_result:', son.flag, son.result, ']')
+            glo.Log.write_log('[Debug] [physical] [create_table_operator] [son_result:',
+                              son.flag, glo.Log.ttstr(son.result), ']')
         if op.eq(son.flag, True):
             self.result = son.result
             self.flag = son.flag
@@ -215,11 +218,11 @@ class PhysicalBlock(Result):
     # 增 , todo 记录错误
     def insert_operator(self, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [insert_operator] [input:', logical_tree, ']')
+            glo.Log.write_log('[Debug] [physical] [insert_operator] [input:', glo.Log.ttstr(logical_tree), ']')
         if isinstance(logical_tree['columns'], tuple):
             for now_data in logical_tree['values']:
                 if glo.GlobalVar.Debug == 1:
-                    print('[Debug] [physical] [insert_operator2] [', now_data, ']')
+                    glo.Log.write_log('[Debug] [physical] [insert_operator2] [', glo.Log.ttstr(now_data), ']')
                 more_data = dict()
                 index = 0
                 for column in logical_tree['columns']:
@@ -283,7 +286,7 @@ class PhysicalBlock(Result):
         if op.eq(IoCacheManager.is_exist_database(logical_tree['name']), True):
             glo.GlobalVar.databasePath = logical_tree['name']
             if glo.GlobalVar.Debug == 1:
-                print('[Debug] [physical] [use_operator] [', glo.GlobalVar.databasePath, ']')
+                glo.Log.write_log('[Debug] [physical] [use_operator] [', glo.GlobalVar.databasePath, ']')
             self.result = []
             self.result.append(str("[Success] [use_database: " + logical_tree['name'] + ']'))
         else:
@@ -319,7 +322,7 @@ class PhysicalBlock(Result):
     @classmethod
     def dfs_plan_tree(cls, logical_tree):
         if glo.GlobalVar.Debug == 1:
-            print('[Debug] [physical] [dfs_plan_tree] [', logical_tree, ']')
+            glo.Log.write_log('[Debug] [physical] [dfs_plan_tree] [', glo.Log.ttstr(logical_tree), ']')
         now_block = PhysicalBlock()
         if op.eq(logical_tree['type'], 'map'):
             now_block.map_operator(logical_tree)

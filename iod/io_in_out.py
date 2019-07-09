@@ -5,7 +5,6 @@
 # 作用：作为存储管理器，涉及文件读写,序列化
 
 # ======================================
-from glo.glovar import *
 try:
     import cPickle as pickle
 except ImportError:
@@ -13,6 +12,7 @@ except ImportError:
 import json
 import os
 import operator as op
+from glo.glovar import *
 
 
 class StoreManager:
@@ -27,7 +27,7 @@ class StoreManager:
     @staticmethod
     def write_table(list_object, table_name):
         if GlobalVar.Debug == 1:
-            print('[Debug] [StoreManager] [write_table] [list_object:', list_object.data,
+            Log.write_log('[Debug] [StoreManager] [write_table] [list_object:', Log.ttstr(list_object.data),
                   'table_name',  table_name, ']')
         list_string = []
         for object_ins in list_object.data:
@@ -40,7 +40,7 @@ class StoreManager:
         table_file = open(tablePath + '/' + 'data', "w")
         for line in list_string:
             if GlobalVar.Debug == 1:
-                print('[Debug] [StoreManager] [store_table_file] [line:', line, ']')
+                Log.write_log('[Debug] [StoreManager] [store_table_file] [line:', Log.ttstr(line), ']')
             table_file.write(line+"\n")
         table_file.close()
 
@@ -49,7 +49,7 @@ class StoreManager:
     def get_table_metadata(table_name):
         tablePath = GlobalVar.dirPath + '/' + GlobalVar.databasePath + '/' + table_name
         if op.eq(os.path.exists(tablePath), False):
-            print("[Error] [Table is not accessible.]")
+            Log.write_log("[Error] [Table is not accessible.]")
             return
         list_string = open(tablePath + '/' + 'meta', "r")
         list_meta = []
@@ -61,7 +61,7 @@ class StoreManager:
     def read_table(table_name):
         tablePath = GlobalVar.dirPath + '/' + GlobalVar.databasePath + '/' + table_name
         if op.eq(os.path.exists(tablePath), False):
-            print("[Error] [Table is not accessible.]")
+            Log.write_log("[Error] [Table is not accessible.]")
             return
         list_string = StoreManager.load_table_file(tablePath)
         list_object = []

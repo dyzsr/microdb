@@ -60,8 +60,11 @@ class PhysicalBlock(Result):
                 self.data.append(now_data)
             else:
                 more_data = dict()
+                add_data = dict()
                 for column in logical_tree['columns']:
-                    more_data[column.name] = column.calc_data(now_data)
+                    add_data[column.name] = column.calc_data(now_data)
+                table_name = list(now_data.keys())[0]
+                more_data[table_name] = add_data
                 self.data.append(more_data)
         return self
 

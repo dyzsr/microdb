@@ -78,7 +78,7 @@ const useStyles = makeStyles({
 		marginTop: '2px',
 	},
 
-	result: {
+	resultpane: {
 		flex: 1,
 		//width: '50%',
 		borderWidth: '1px',
@@ -88,9 +88,11 @@ const useStyles = makeStyles({
 		marginTop: '2px',
 	},
 
-	table: {
+	result: {
 		borderBottomStyle: 'solid',
 		borderBottomWidth: '1px',
+		marginLeft: '10px',
+		marginRight: '10px',
 	},
 
 	blockTitle: {
@@ -100,45 +102,92 @@ const useStyles = makeStyles({
 
 // Multiple table results may be presented
 
-const TableResult = ({tables}) => {
+const TableResult = ({name, meta, values, id}) => {
 	const classes = useStyles();
 
 	return (
-		<div> {
-			tables.map(({meta, values}, id1) => (
-				<div className={classes.table} key={`table_${id1}`}>
-					<Table>
-						<TableHead>
-							<TableRow>
-									{
-										meta.map((cell, id2) => (
-											<TableCell key={`table_${id1}_meta_${id2}`}>
-													{cell}
-											</TableCell>
-										))
-									}
-							</TableRow>
-						</TableHead>
+		<div className={classes.result} key={`res_${id}`}>
+			<h3>{name}</h3>
 
-						<TableBody>
+			<Table>
+				<TableHead>
+					<TableRow>
+						{
+							meta.map((cell, id2) => (
+								<TableCell key={`res_${id}_meta_${id2}`}>
+									{cell}
+								</TableCell>
+							))
+						}
+					</TableRow>
+				</TableHead>
+
+				<TableBody>
+					{
+						values.map((row, id3) => (
+							<TableRow key={`res_${id}_row_${id3}`}>
 								{
-									values.map((row, id3) => (
-										<TableRow key={`table_${id1}_row_${id3}`}>
-												{
-													row.map((cell, id4) => (
-														<TableCell key={`table_${id1}_row_${id3}_col_${id4}`}>
-																{cell}
-														</TableCell>
-													))
-												}
-										</TableRow>
+									row.map((cell, id4) => (
+										<TableCell key={`res_${id}_row_${id3}_col_${id4}`}>
+											{cell}
+										</TableCell>
 									))
 								}
-						</TableBody>
-					</Table>
-				</div>
-			))
-		} </div>
+							</TableRow>
+						))
+					}
+				</TableBody>
+			</Table>
+		</div>
+	);
+}
+
+const InfoResult = ({info, id}) => {
+	const classes = useStyles();
+	
+	return (
+		<div className={classes.result} key={`res_${id}`}>
+			<h3>信息</h3>
+			<p>{info}</p>
+		</div>
+	);
+}
+
+const ErrorResult = ({info, id}) => {
+	const classes = useStyles();
+	
+	return (
+		<div className={classes.result} key={`res_${id}`}>
+			<h3>错误</h3>
+			<p>{info}</p>
+		</div>
+	);
+}
+
+const ResultView = ({tables}) => {
+	//	const classes = useStyles();
+
+	return (
+		<div>
+			{
+				tables.map((result, id) => {
+					if (result.type === 'table') {
+						return (
+							<TableResult
+								name={result.name}
+								meta={result.meta}
+								values={result.values}
+								id={id}
+							/>
+						);
+					} else if (result.type === 'info') {
+						return <InfoResult info={result.info} id={id} />;
+					} else {
+						return <ErrorResult info={result.info} id={id} />;
+					}
+				})
+			}
+		</div>
 	);
 }
 
@@ -297,12 +346,12 @@ const App = (props) => {
 				</div>
 
 					{/* Results Window */}
-				<div className={classes.result}>
+				<div className={classes.resultpane}>
 					<h2 className={classes.blockTitle}>
 							查询结果
 					</h2>
 
-					<TableResult tables={tables} />
+					<ResultView tables={tables} />
 				</div>
 			</main>
 		</div>

@@ -13,9 +13,9 @@ from pengine.physical_engine import *
 import json
 import glo.glovar
 
-print(glo.glovar.GlobalVar.dirPath)
-glo.glovar.GlobalVar.dirPath = os.environ['HOME'] + '/workspace/db_store'
-print('DB store path: ', glo.glovar.GlobalVar.dirPath)
+#print(glo.glovar.GlobalVar.dirPath)
+#glo.glovar.GlobalVar.dirPath = os.environ['HOME'] + '/workspace/db_store'
+#print('DB store path: ', glo.glovar.GlobalVar.dirPath)
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -27,6 +27,8 @@ class MainHandler(tornado.web.RequestHandler):
     def post(self):
         data = json.loads(self.request.body)['data']
         #print(data)
+
+        results = []
 
         # Parse queries
         try:
@@ -46,20 +48,42 @@ class MainHandler(tornado.web.RequestHandler):
             print('Parsing tree:')
             print(json.dumps(tree, indent=2), end='\n\n')
 
+            '''
             logres = LogicalEngine.run_logical_main(tree)
-            res = PhysicalBlock.dfs_plan_tree(logres)
+            phyres = PhysicalBlock.dfs_plan_tree(logres)
             print('Result:')
-            print(res, end='\n\n')
+            print(phyres, end='\n\n')
+
+            res = {}
+            if phyres.flag == True:
+                res['type'] = 'error'
+            elif isinstance(phyres.result, str):
+                res['type'] = 'info'
+            else:
+                res['type'] = 'values'
+            '''
 
         # Write back result
         result = {
-                'results': ({
-                    'meta': ('a', 'b', 'c'),
-                    'values': (
-                        (1, -2., 'c3'),
-                        (4, 5.5, 'c6'),
-                        )
-                    },)
+                'results': [
+                    {
+                        'type': 'table',
+                        'name': 'tb',
+                        'meta': ('a', 'b', 'c'),
+                        'values': (
+                            (1, -2., 'c3'),
+                            (4, 5.5, 'c6'),
+                            )
+                        },
+                    {
+                        'type': 'error',
+                        'info': '$*@Y#&*#&**#()!*#',
+                        },
+                    {
+                        'type': 'info',
+                        'info': 'good',
+                        }
+                    ]
                 }
         self.write(result)
 

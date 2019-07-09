@@ -43,7 +43,7 @@ const useStyles = makeStyles({
 
 	appBar: {
 		display: 'flex',
-		height: '6%',
+		height: '7%',
 		justifyContent: 'center',
 		background: '#3388ee',
 	},
@@ -67,6 +67,7 @@ const useStyles = makeStyles({
 		display: 'flex',
 		flexGrow: 1,
 		paddingTop: '5%',
+		paddingBottom: '5%',
 		background: '#334455',
 	},
 
@@ -75,7 +76,7 @@ const useStyles = makeStyles({
 		flex: 1,
 		marginLeft: '20px',
 		marginRight: '8px',
-		marginBottom: '10px',
+		marginBottom: '20px',
 		background: '#559999',
 	},
 
@@ -84,7 +85,7 @@ const useStyles = makeStyles({
 		flex: 1,
 		marginLeft: '8px',
 		marginRight: '20px',
-		marginBottom: '10px',
+		marginBottom: '20px',
 		background: '#bb8877',
 	},
 
@@ -119,10 +120,26 @@ const useStyles = makeStyles({
 	},
 
 	h3: {
-		marginLeft: '10px',
-		marginRight: '10px',
 		paddingTop: '20px',
 		marginBottom: '10px',
+	},
+
+	tablename: {
+		marginLeft: '10px',
+		marginRight: '20px',
+		color: '#335577',
+	},
+
+	info: {
+		marginLeft: '10px',
+		marginRight: '20px',
+		color: '#225599',
+	},
+
+	error: {
+		marginLeft: '10px',
+		marginRight: '20px',
+		color: '#ee2200',
 	},
 });
 
@@ -133,7 +150,13 @@ const TableResult = ({name, meta, values, id}) => {
 
 	return (
 		<div className={classes.result} key={`res_${id}`}>
-			<h3 className={classes.h3}>{name}</h3>
+			<h3 className={classes.h3}>
+				查询结果
+			</h3>
+
+			<p className={classes.tablename}>
+				{name}
+			</p>
 
 			<Table>
 				<TableHead>
@@ -173,8 +196,8 @@ const InfoResult = ({info, id}) => {
 	
 	return (
 		<div className={classes.result} key={`res_${id}`}>
-			<h3>信息</h3>
-			<p>{info}</p>
+			<h3>执行信息</h3>
+			<p className={classes.info}>{info}</p>
 		</div>
 	);
 }
@@ -184,8 +207,8 @@ const ErrorResult = ({info, id}) => {
 	
 	return (
 		<div className={classes.result} key={`res_${id}`}>
-			<h3>错误</h3>
-			<p>{info}</p>
+			<h3>错误信息</h3>
+			<p className={classes.error}>{info}</p>
 		</div>
 	);
 }

@@ -19,6 +19,9 @@ RESERVED = {
 
         'database'  : 'DATABASE',
         'table'     : 'TABLE',
+        'databases' : 'DATABASES',
+        'tables'    : 'TABLES',
+        'columns'   : 'COLUMNS',
 
         'boolean'   : 'BOOLTYPE',
         'int'       : 'INTTYPE',
@@ -52,6 +55,7 @@ RESERVED = {
 # ============= tokens =====================================
 
 tokens = tuple(RESERVED.values()) + (
+        'COMMENT',
         'BOOL',
         'FLOAT',
         'INT',
@@ -73,6 +77,11 @@ tokens = tuple(RESERVED.values()) + (
         'MUL',
         'DIV',
         )
+
+
+def t_COMMENT(t):
+    r'/\*([^*]|\*+[^/])*\*+/'
+    pass
 
 
 t_SEMICOLON = r';'
@@ -166,6 +175,10 @@ def p_statements(p):
     else:
         p[0] = (p[1],) + p[2]
 
+def p_statement_empty(p):
+    'statement : SEMICOLON'
+    p[0] = tuple()
+
 # ************** USE statement *********************
 
 def p_statement_use(p):
@@ -190,7 +203,7 @@ def p_statement_show(p):
 
 def p_showexpr_database(p):
     '''
-    showexpr : SHOW DATABASE
+    showexpr : SHOW DATABASES
     '''
     p[0] = {
             'type': 'query',
@@ -202,7 +215,7 @@ def p_showexpr_database(p):
 
 def p_showexpr_table(p):
     '''
-    showexpr : SHOW TABLE
+    showexpr : SHOW TABLES
     '''
     p[0] = {
             'type': 'query',
@@ -211,6 +224,20 @@ def p_showexpr_table(p):
                 'type': 'table',
                 }
             }
+
+def p_showexpr_columns(p):
+    '''
+    showexpr : SHOW COLUMNS FROM ID
+    '''
+    p[0] = {
+            'type': 'query',
+            'name': 'show',
+            'content': {
+                'type': 'columns',
+                'tablename': p[4]
+                }
+            }
+
             
 
 # ************** SELECT statement ******************

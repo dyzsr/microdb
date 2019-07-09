@@ -6,7 +6,6 @@ import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 //import Icon from '@material-ui/core/Icon';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
-import SaveIcon from '@material-ui/icons/Save';
 import SaveAltIcon from '@material-ui/icons/SaveAlt';
 import PlayCircleFilledIcon from '@material-ui/icons/PlayCircleFilled';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
@@ -29,18 +28,24 @@ import 'brace/mode/mysql';
 import 'brace/theme/github';
 
 
+var fileDownload = require('js-file-download');
+
 var storage = window.localStorage;
 
 
 const useStyles = makeStyles({
 	root: {
 		display: 'flex',
+		width: '100%',
+		height: '100%',
+		alignItems: 'stretch',
 	},
 
 	appBar: {
 		display: 'flex',
-		height: '50px',
+		height: '7%',
 		justifyContent: 'center',
+		background: '#3388ee',
 	},
 
 	toolbar: {
@@ -61,42 +66,80 @@ const useStyles = makeStyles({
 		justifyContent: 'flex-start',
 		display: 'flex',
 		flexGrow: 1,
-		paddingTop: '50px',
-		//paddingLeft: '20px',
-		height: '100%',
+		paddingTop: '6%',
+		paddingBottom: '5%',
+		background: '#334455',
 	},
 
-	editor: {
+	editorpane: {
+		display: 'block',
 		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		borderWidth: '1px',
-		borderStyle: 'solid',
-		//width: '50%',
-		marginLeft: '5px',
-		marginRight: '2px',
-		marginTop: '2px',
+		marginLeft: '20px',
+		marginRight: '8px',
+		marginBottom: '20px',
+		background: '#559999',
 	},
 
 	resultpane: {
+		display: 'block',
 		flex: 1,
-		//width: '50%',
-		borderWidth: '1px',
-		borderStyle: 'solid',
-		marginLeft: '2px',
-		marginRight: '5px',
-		marginTop: '2px',
+		marginLeft: '8px',
+		marginRight: '20px',
+		marginBottom: '20px',
+		background: '#bb8877',
+	},
+
+	resultbody: {
+		background: '#ffffff',
+	},
+
+	resultblock: {
+		marginLeft: '10px',
+		marginRight: '10px',
+		borderBottomStyle: 'solid',
+		borderBottomWidth: '1px',
 	},
 
 	result: {
-		borderBottomStyle: 'solid',
-		borderBottomWidth: '1px',
+		background: '#ffffff',
 		marginLeft: '10px',
 		marginRight: '10px',
 	},
 
+	blockHead: {
+		//height: '7%',
+	},
+
+	blockBody: {
+		background: '#ffffff',
+		height: '95%',
+	},
+
 	blockTitle: {
 		marginLeft: '10px',
+	},
+
+	h3: {
+		paddingTop: '10px',
+		//paddingBottom: '5px',
+	},
+
+	tablename: {
+		marginLeft: '10px',
+		marginRight: '20px',
+		color: '#5577bb',
+	},
+
+	info: {
+		marginLeft: '10px',
+		marginRight: '20px',
+		color: '#5577bb',
+	},
+
+	error: {
+		marginLeft: '10px',
+		marginRight: '20px',
+		color: '#ee2200',
 	},
 });
 
@@ -107,7 +150,13 @@ const TableResult = ({name, meta, values, id}) => {
 
 	return (
 		<div className={classes.result} key={`res_${id}`}>
-			<h3>{name}</h3>
+			<h3 className={classes.h3}>
+				查询结果
+			</h3>
+
+			<p className={classes.tablename}>
+				{name}
+			</p>
 
 			<Table>
 				<TableHead>
@@ -147,8 +196,10 @@ const InfoResult = ({info, id}) => {
 	
 	return (
 		<div className={classes.result} key={`res_${id}`}>
-			<h3>信息</h3>
-			<p>{info}</p>
+			<h3 className={classes.h3}>
+				执行信息
+			</h3>
+			<p className={classes.info}>{info}</p>
 		</div>
 	);
 }
@@ -158,34 +209,42 @@ const ErrorResult = ({info, id}) => {
 	
 	return (
 		<div className={classes.result} key={`res_${id}`}>
-			<h3>错误</h3>
-			<p>{info}</p>
+			<h3 className={classes.h3}>
+				错误信息
+			</h3>
+			<p className={classes.error}>{info}</p>
 		</div>
 	);
 }
 
 const ResultView = ({tables}) => {
-	//	const classes = useStyles();
+	const classes = useStyles();
 
 	return (
 		<div>
 			{
-				tables.map((result, id) => {
-					if (result.type === 'table') {
-						return (
-							<TableResult
-								name={result.name}
-								meta={result.meta}
-								values={result.values}
-								id={id}
-							/>
-						);
-					} else if (result.type === 'info') {
-						return <InfoResult info={result.info} id={id} />;
-					} else {
-						return <ErrorResult info={result.info} id={id} />;
-					}
-				})
+				tables.map((result, id) => (
+					<div className={classes.resultblock}>
+						{
+							((result) => {
+								if (result.type === 'table') {
+									return (
+										<TableResult
+											name={result.name}
+											meta={result.meta}
+											values={result.values}
+											id={id}
+										/>
+									);
+								} else if (result.type === 'info') {
+									return <InfoResult info={result.info} id={id} />;
+								} else {
+									return <ErrorResult info={result.info} id={id} />;
+								}
+							}) (result)
+						}
+					</div>
+				))
 			}
 		</div>
 	);
@@ -194,10 +253,10 @@ const ResultView = ({tables}) => {
 const App = (props) => {
 	const classes = useStyles();
 
+	// source code in SQL
 	let init_code = storage.getItem('code');
 	if (init_code == null)
 		init_code = '';
-	// source code in SQL
 	const [code, setCode] = useState(init_code);
 
 	const onChangeCode = (code) => {
@@ -205,12 +264,12 @@ const App = (props) => {
 		setCode(code);
 	};
 
+	// table results
 	let init_tables = storage.getItem('tables');
 	if (init_tables == null)
 		init_tables = [];
 	else
 		init_tables = JSON.parse(init_tables);
-	// table results
 	const [tables, setTables] = useState(init_tables);
 
 	// load the code from files
@@ -234,12 +293,8 @@ const App = (props) => {
 		}
 	};
 
-	// save the code into files
-	const saveFile = useRef(null);
-	const onSave = () => {
-	};
-
 	const onSaveAs = () => {
+		fileDownload(code, 'query.sql');
 	};
 
 	// run the code
@@ -286,7 +341,7 @@ const App = (props) => {
 			<AppBar className={classes.appBar}>
 				<Toolbar className={classes.toolbar}>
 					<div className={classes.toolbarLeft}>
-							{/* Open file button */}
+						{/* Open file button */}
 						<IconButton onClick={() => openFile.current.click()}>
 							<FolderOpenIcon />
 							<input
@@ -297,25 +352,20 @@ const App = (props) => {
 								accept=".sql,.txt"
 							/>
 						</IconButton>
-						
-							{/* Save file button */}
-						<IconButton onClick={() => onSave()}>
-							<SaveIcon />
-						</IconButton>
 
-							{/* Save As button */}
+						{/* Save As button */}
 						<IconButton onClick={() => onSaveAs()}>
 							<SaveAltIcon />
 						</IconButton>
 					</div>
 
 					<div className={classes.toolbarRight}>
-							{/* Run code button */}
+						{/* Run code button */}
 						<IconButton onClick={() => onPlay()}>
 							<PlayCircleFilledIcon />
 						</IconButton>
 
-							{/* Exit button */}
+						{/* Exit button */}
 						<IconButton onClick={() => onExit()}>
 							<ExitToAppIcon />
 						</IconButton>
@@ -324,34 +374,41 @@ const App = (props) => {
 			</AppBar>
 
 			<main className={classes.content}>
-					{/* Editor Window */}
-				<div className={classes.editor}>
-					<h2 className={classes.blockTitle}>
-						编辑查询
-					</h2>
-					<ContainerDimensions>
+				{/* Editor Window */}
+				<div className={classes.editorpane}>
+					<div className={classes.blockHead}>
+						<h2 className={classes.blockTitle}>
+							编辑查询
+						</h2>
+					</div>
+
+					<div className={classes.blockBody}>
+						<ContainerDimensions>
 							{({width, height}) => (
 								<AceEditor
 									mode="mysql"
 									theme="github"
 									onChange={(code) => onChangeCode(code)}
 									value={code}
-									width={`${width - 10}px`}
-									//height={`500px`}
-									//width={`${width}px`}
-									//height={`{height}px`}
+									width={`${width - 1}px`}
+									height={`${height - 1}px`}
 								/>
 							)}
-					</ContainerDimensions>
+						</ContainerDimensions>
+					</div>
 				</div>
 
-					{/* Results Window */}
+				{/* Results Window */}
 				<div className={classes.resultpane}>
-					<h2 className={classes.blockTitle}>
+					<div className={classes.blockHead}>
+						<h2 className={classes.blockTitle}>
 							查询结果
-					</h2>
+						</h2>
+					</div>
 
-					<ResultView tables={tables} />
+					<div className={classes.blockBody}>
+						<ResultView tables={tables} />
+					</div>
 				</div>
 			</main>
 		</div>

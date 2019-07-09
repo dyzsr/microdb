@@ -28,6 +28,8 @@ import 'brace/mode/mysql';
 import 'brace/theme/github';
 
 
+const process = require('process');
+
 var fileDownload = require('js-file-download');
 
 var storage = window.localStorage;
@@ -178,7 +180,7 @@ const TableResult = ({name, meta, values, id}) => {
 								{
 									row.map((cell, id4) => (
 										<TableCell key={`res_${id}_row_${id3}_col_${id4}`}>
-											{cell}
+											{''+cell}
 										</TableCell>
 									))
 								}
@@ -318,7 +320,8 @@ const App = (props) => {
 				console.log(results);
 
 				storage.setItem('tables', JSON.stringify(results));
-			});
+			})
+			.catch(err => alert(err));
 		console.log(code);
 	};
 
@@ -331,7 +334,7 @@ const App = (props) => {
 		})
 			.then(response => response.text())
 			.then(text => {
-				alert('exited.' + text);
+				alert('退出数据库');
 			})
 			.catch(error => alert(error));
 	};

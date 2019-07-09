@@ -1,6 +1,9 @@
 # vim
 *.swp
 
+# nohup
+nohup.out
+
 # ply
 sql/parser.out
 sql/parsetab.py

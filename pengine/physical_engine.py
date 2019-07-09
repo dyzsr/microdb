@@ -226,7 +226,7 @@ class PhysicalBlock(Result):
             for now_data in logical_tree['values']:
                 if glo.GlobalVar.Debug == 1:
                     glo.Log.write_log('[Debug] [physical] [insert_operator2] [', glo.Log.ttstr(now_data), ']')
-                more_data = dict()
+                more_data = IoCacheManager.insert_table_none_entry(logical_tree['table'])
                 index = 0
                 for column in logical_tree['columns']:
                     more_data[column] = now_data[index].calc_data()

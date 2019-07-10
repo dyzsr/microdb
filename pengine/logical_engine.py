@@ -128,7 +128,7 @@ class ExpTreeNode:
             if op.eq(grammar_node['type'], 'opexpr'):
                 oper = grammar_node['operator']
                 now_node.type = oper
-                if re.match(r'\+|-|\*|\|and|or|>|<|=|!=|<=|>=', oper):
+                if re.match(r'\+|-|\*|\\|and|or|>|<|=|!=|<=|>=', oper):
                     if glo.GlobalVar.Debug == 1:
                         glo.Log.write_log('[Debug] [make_check_tree] [re1]:', oper, ']')
                     now_node.lson = cls.make_calc_tree(grammar_node['operands'][0])
@@ -200,7 +200,7 @@ class LogicalEngine:
             now_node['check'] = ExpTreeNode()
         else:
             now_node['check'] = ExpTreeNode().make_calc_tree(grammar_node)
-            now_node['check'].debug_calc_tree()
+            #now_node['check'].debug_calc_tree()
         return now_node
 
     # 处理select中的投影,select
@@ -299,7 +299,7 @@ class LogicalEngine:
         now_node['type'] = 'calc'
         now_node['column'] = grammar_node['column']['name']
         now_node['calc'] = ExpTreeNode().make_calc_tree(grammar_node['opexpr'])
-        now_node['calc'].debug_calc_tree()
+        #now_node['calc'].debug_calc_tree()
         return now_node
 
     # 更新

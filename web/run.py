@@ -15,7 +15,7 @@ import json
 import glo.glovar
 
 print(glo.glovar.GlobalVar.dirPath)
-glo.glovar.GlobalVar.dirPath = os.environ['HOME'] + '/workspace/db_store'
+glo.glovar.GlobalVar.dirPath = os.environ['HOME'] + '/micro_db_store'
 print('DB store path: ', glo.glovar.GlobalVar.dirPath)
 
 
@@ -68,6 +68,10 @@ class MainHandler(tornado.web.RequestHandler):
                 return ['databases']
             if tree['type'] == 'query' and tree['name'] == 'show' and tree['content']['type'] == 'table':
                 return ['tables']
+            new_data = list()
+            num = len(list(data[0].values()))
+            for i in range(num):
+                new_data.extend(data[i].values())
             return list(list(data[0].values())[0].keys())
 
         def get_values(tree, data):
